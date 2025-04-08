@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-class AbtusPage(QtWidgets.QWidget):
+class AboutUsPage(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMinimumSize(600, 300)  # Définir une taille minimale
