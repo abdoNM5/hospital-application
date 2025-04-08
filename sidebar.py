@@ -3,14 +3,9 @@ from pages.home import HomePage
 from pages.developers import DevelopersPage
 from pages.contact import ContactPage
 from pages.support import SuportPage
-
-
 from pages.abtus import AbtusPage
+
 from pages.exit_page import ExitPage
-
-from pages.abtus import AboutUsPage
-
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
@@ -307,7 +302,6 @@ class Ui_MainWindow(object):
         self.stackedWidget.setObjectName("stackedWidget")
         
         # --- Loading pages from separate files ---
-
         # IMPORTANT: Pass QStackedWidget reference to HomePage so it can add the main application page after login.
         self.home_page = HomePage(main_window=self.stackedWidget)
         self.developers_page = DevelopersPage()
@@ -315,12 +309,6 @@ class Ui_MainWindow(object):
         self.support_page = SuportPage()
         self.abtus_page = AbtusPage()
         self.exit_page = ExitPage(self.stackedWidget)  # Correct instantiation
-        # IMPORTANT: Pass MainWindow reference to HomePage so it can close the main window.
-        self.home_page = HomePage(main_window=MainWindow)           # instance from pages/home.py
-        self.developers_page = DevelopersPage()  # instance from pages/developers.py
-        self.contact_page = ContactPage()       # instance from pages/contact.py
-        self.support_page = SuportPage()        # instance from pages/support.py
-        self.abtus_page = AboutUsPage()           # instance from pages/abtus.py
         
         # Add the pages to the stacked widget in the desired order
         self.stackedWidget.addWidget(self.home_page)         # index 0
