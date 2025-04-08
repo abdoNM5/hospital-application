@@ -3,7 +3,9 @@ from pages.home import HomePage
 from pages.developers import DevelopersPage
 from pages.contact import ContactPage
 from pages.support import SuportPage
-from pages.abtus import AboutUsPage
+
+from pages.abtus import AbtusPage
+from pages.exit_page import ExitPage
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -301,25 +303,28 @@ class Ui_MainWindow(object):
         self.stackedWidget.setObjectName("stackedWidget")
         
         # --- Loading pages from separate files ---
+
+        # IMPORTANT: Pass QStackedWidget reference to HomePage so it can add the main application page after login.
+        self.home_page = HomePage(main_window=self.stackedWidget)
+        self.developers_page = DevelopersPage()
+        self.contact_page = ContactPage()
+        self.support_page = SuportPage()
+        self.abtus_page = AbtusPage()
+        self.exit_page = ExitPage(self.stackedWidget)  # Correct instantiation
         # IMPORTANT: Pass MainWindow reference to HomePage so it can close the main window.
         self.home_page = HomePage(main_window=MainWindow)           # instance from pages/home.py
         self.developers_page = DevelopersPage()  # instance from pages/developers.py
         self.contact_page = ContactPage()       # instance from pages/contact.py
         self.support_page = SuportPage()        # instance from pages/support.py
         self.abtus_page = AboutUsPage()           # instance from pages/abtus.py
+
         
         # Add the pages to the stacked widget in the desired order
         self.stackedWidget.addWidget(self.home_page)         # index 0
-        self.stackedWidget.addWidget(self.developers_page)   # index 1
+        self.stackedWidget.addWidget(self.developers_page)     # index 1
         self.stackedWidget.addWidget(self.contact_page)        # index 2
         self.stackedWidget.addWidget(self.support_page)        # index 3
-        self.stackedWidget.addWidget(self.abtus_page)         # index 4
-        
-        # Optionally add an exit page or handle exit separately
-        self.exit_page = QtWidgets.QWidget()
-        exit_layout = QtWidgets.QVBoxLayout(self.exit_page)
-        exit_label = QtWidgets.QLabel("Exit Page", self.exit_page)
-        exit_layout.addWidget(exit_label)
+        self.stackedWidget.addWidget(self.abtus_page)          # index 4
         self.stackedWidget.addWidget(self.exit_page)           # index 5
         
         self.main_vertical_layout.addWidget(self.stackedWidget)
@@ -371,7 +376,7 @@ class Ui_MainWindow(object):
         self.abtus_btn.toggled.connect(lambda checked: self.stackedWidget.setCurrentIndex(4) if checked else None)
         self.abtus_btn2.toggled.connect(lambda checked: self.stackedWidget.setCurrentIndex(4) if checked else None)
         
-        # Exit buttons -> Exit Page (index 5) or close
+        # Exit buttons -> Exit Page (index 5)
         self.exit_btn.toggled.connect(lambda checked: self.stackedWidget.setCurrentIndex(5) if checked else None)
         self.exit_btn2.toggled.connect(lambda checked: self.stackedWidget.setCurrentIndex(5) if checked else None)
         
