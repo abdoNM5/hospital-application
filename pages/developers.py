@@ -19,6 +19,7 @@ class DevelopersPage(QtWidgets.QWidget):
     def setup_ui(self):
         # Main layout with more spacing
         self.layout = QtWidgets.QVBoxLayout(self)
+
         self.layout.setContentsMargins(20, 20, 20, 20)
         self.layout.setSpacing(20)
         

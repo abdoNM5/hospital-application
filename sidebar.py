@@ -4,8 +4,12 @@ from pages.developers import DevelopersPage
 from pages.contact import ContactPage
 from pages.support import SuportPage
 
+
 from pages.abtus import AbtusPage
 from pages.exit_page import ExitPage
+
+from pages.abtus import AboutUsPage
+
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -317,7 +321,6 @@ class Ui_MainWindow(object):
         self.contact_page = ContactPage()       # instance from pages/contact.py
         self.support_page = SuportPage()        # instance from pages/support.py
         self.abtus_page = AboutUsPage()           # instance from pages/abtus.py
-
         
         # Add the pages to the stacked widget in the desired order
         self.stackedWidget.addWidget(self.home_page)         # index 0
