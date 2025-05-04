@@ -10,6 +10,7 @@ import pyqtgraph as pg
 import pandas as pd
 import numpy as np
 
+
 # Set global pyqtgraph configuration for a more professional look
 pg.setConfigOption('background', 'w')  # White background
 pg.setConfigOption('foreground', 'k')  # Black foreground
@@ -46,8 +47,10 @@ class StyledFrame(QFrame):
 
 
 class DiseaseStatsDashboard(QMainWindow):
-    def __init__(self):
+    def __init__(self, worker_id=None, full_name=None, role=None, main_window=None):
         super().__init__()
+        self.main_window = main_window  # Store the reference to the main window
+
         self.setWindowTitle("Hospital Disease Statistics Dashboard")
         self.setGeometry(100, 100, 1280, 800)
         self.setStyleSheet("""
@@ -95,6 +98,8 @@ class DiseaseStatsDashboard(QMainWindow):
                 background-color: #2980b9;
             }
         """)
+
+
         
         # Sample data - replace with your actual data loading mechanism
         self.load_data()
@@ -142,7 +147,6 @@ class DiseaseStatsDashboard(QMainWindow):
         header_layout.addWidget(dashboard_title)
         header_layout.addStretch()
         header_layout.addWidget(current_date)
-        
         main_layout.addWidget(header_frame)
         
         # Create filters section
@@ -256,105 +260,142 @@ class DiseaseStatsDashboard(QMainWindow):
         self.create_trend_analysis_tab()
         self.create_demographics_tab()
         self.create_severity_analysis_tab()
+
+                # Create bottom action layout (add this before the initial update)
+        bottom_action_layout = QHBoxLayout()
+        bottom_action_layout.addStretch(1)  # Add stretch to push button left
+
+                # Create back button
+        back_btn = QPushButton("Back to Workspaces")
+        back_btn.setStyleSheet("""
+            QPushButton {
+                background-color: red;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                min-width: 120px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        back_btn.clicked.connect(self.go_back_to_workspaces)
+        bottom_action_layout.addWidget(back_btn)
+
+                # Add the bottom layout to main layout
+        main_layout.addLayout(bottom_action_layout)
         
         # Initial update
         self.update_charts()
+
+    def go_back_to_workspaces(self):
+        """Return to the workspaces/home page."""
+        from pages.home import MainWindow
+        if self.main_window:
+            # Find the HomePage widget in the stacked widget
+            for index in range(self.main_window.count()):
+                widget = self.main_window.widget(index)
+                if isinstance(widget, MainWindow):  # This checks for MainWindow class
+                    self.main_window.setCurrentWidget(widget)
+                    break
+ 
         
     def load_data(self):
-        # Simulated data - replace with actual data loading
-        # In a real application, you would load this from a database or file
-        diseases = ["Influenza", "Diabetes", "Hypertension", "Asthma", "COVID-19", 
-                   "Pneumonia", "Heart Disease", "Cancer", "Stroke", "Arthritis"]
+        import oracledb
         
-        # Generate sample data with more realistic patterns
-        n_records = 5000
-        
-        # Create dates with higher frequency in winter months for some diseases
-        winter_heavy = ["Influenza", "Pneumonia"]
-        summer_heavy = ["Asthma", "Heat Stroke"]
-        
-        dates = []
-        disease_list = []
-        
-        for _ in range(n_records):
-           disease = np.random.choice(diseases)
-        
-        # Seasonal patterns - ensuring probabilities sum to exactly 1
-        if disease in winter_heavy:
-            # Winter heavy months (Jan, Feb, Dec have higher probabilities)
-            month = np.random.choice(range(1, 13), p=[0.15, 0.15, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.1, 0.15])
-        elif disease in summer_heavy:
-            # Summer heavy months (May-Aug have higher probabilities)
-            month = np.random.choice(range(1, 13), p=[0.05, 0.05, 0.05, 0.1, 0.15, 0.15, 0.15, 0.15, 0.05, 0.05, 0.05, 0.05])
-        else:
-            # Equal distribution throughout the year
-            month = np.random.choice(range(1, 13), p=[1/12] * 12)
-            
-        day = np.random.choice(range(1, 29))
-        year = 2024
-        
-        date = datetime(year, month, day)
-        dates.append(date)
-        disease_list.append(disease)
-        
-        # Create age distributions appropriate to each disease
-        ages = []
-        departments = []
-        severities = []
-        
-        for disease in disease_list:
-            if disease in ["Diabetes", "Heart Disease", "Stroke", "Arthritis"]:
-                # More common in older patients
-                age = int(np.random.beta(5, 2) * 90) + 10
-                dept = np.random.choice(["Cardiology", "Internal Medicine", "Endocrinology"], 
-                                       p=[0.5, 0.3, 0.2])
-            elif disease in ["Asthma", "Influenza"]:
-                # More distributed across ages
-                age = int(np.random.beta(2, 2) * 90) + 5
-                dept = np.random.choice(["Pulmonology", "Pediatrics", "Emergency"], 
-                                       p=[0.4, 0.3, 0.3])
-            elif disease == "Cancer":
-                # Increases with age but can affect any age
-                age = int(np.random.beta(3, 2) * 90) + 5
-                dept = "Oncology"
-            else:
-                age = int(np.random.normal(45, 20))
-                # Constrain age to reasonable range
-                age = max(1, min(age, 99))
-                dept = np.random.choice(["Emergency", "Internal Medicine", "Neurology", "Cardiology", "Pediatrics", "Oncology"])
-                
-            # Severity tends to increase with age
-            age_factor = age / 100
-            
-            if disease in ["COVID-19", "Pneumonia", "Cancer"]:
-                # These can be more severe
-                p_severe = 0.4 + (0.3 * age_factor)
-                p_critical = 0.1 + (0.2 * age_factor)
-            else:
-                p_severe = 0.2 + (0.2 * age_factor)
-                p_critical = 0.05 + (0.1 * age_factor)
-                
-            p_moderate = 0.5 - (p_severe / 2) - (p_critical / 2)
-            p_mild = 1 - p_severe - p_critical - p_moderate
-            
-            severity = np.random.choice(
-                ["Mild", "Moderate", "Severe", "Critical"],
-                p=[p_mild, p_moderate, p_severe, p_critical]
+        connection = None
+        cursor = None
+        try:
+            # Connect to database
+            connection = oracledb.connect(
+                # user="system", 
+                # password="Abdo2004@", 
+                # dsn="localhost:1521/FREE"
+                user="system", 
+                password="s2004b22", 
+                dsn="192.168.21.1:1521/FREE"
             )
+            cursor = connection.cursor()
             
-            ages.append(age)
-            departments.append(dept)
-            severities.append(severity)
-        
-        # Construct the DataFrame
-        self.data = pd.DataFrame({
-            'disease': disease_list,
-            'date': dates,
-            'age': ages,
-            'department': departments,
-            'severity': severities,
-        })
-        
+            # SQL query to fetch disease statistics data
+            # Modify this query according to your database schema
+            query = """
+            SELECT 
+                d.disease_name as disease, 
+                d.diagnosis_date as diagnosis_date, 
+                FLOOR(MONTHS_BETWEEN(SYSDATE, p.birth_date) / 12) AS age, 
+                p.department as department, 
+                s.severity as severity
+            FROM 
+                patient p
+            JOIN 
+                disease d ON p.patient_id = d.patient_id
+            JOIN
+                symptoms s on p.patient_id = s.patient_id
+            WHERE 
+                d.diagnosis_date >= ADD_MONTHS(SYSDATE, -12)  -- Last 12 months of data
+            """
+            
+            # Execute query
+            cursor.execute(query)
+            
+            # Fetch all records
+            rows = cursor.fetchall()
+            
+            # Get column names from cursor description
+            columns = [col[0] for col in cursor.description]
+            
+            # Prepare data lists
+            diseases = []
+            dates = []
+            ages = []
+            departments = []
+            severities = []
+            
+            # Process rows
+            for row in rows:
+                diseases.append(row[0])
+                dates.append(row[1])
+                ages.append(row[2])
+                departments.append(row[3])
+                severities.append(row[4])
+            
+            # Create DataFrame
+            self.data = pd.DataFrame({
+                'disease': diseases,
+                'date': dates,
+                'age': ages,
+                'department': departments,
+                'severity': severities,
+            })
+            
+            # Close cursor and connection
+            cursor.close()
+            connection.close()
+            
+            print(f"Successfully loaded {len(self.data)} records from database")
+            
+        except oracledb.Error as error:
+            print(f"Database error: {error}")
+            # Create empty DataFrame if database connection fails
+            self.data = pd.DataFrame({
+                'disease': [],
+                'date': [],
+                'age': [],
+                'department': [],
+                'severity': [],
+            })
+        except Exception as e:
+            print(f"Error: {e}")
+            # Create empty DataFrame if any other error occurs
+            self.data = pd.DataFrame({
+                'disease': [],
+                'date': [],
+                'age': [],
+                'department': [],
+                'severity': [],
+            })
     def create_disease_distribution_tab(self):
         tab = QWidget()
         layout = QVBoxLayout()
@@ -371,8 +412,7 @@ class DiseaseStatsDashboard(QMainWindow):
         self.disease_plot.getAxis('bottom').setTicks([])  # We'll handle labels in update_charts
         layout.addWidget(self.disease_plot)
         
-        self.tabs.addTab(tab, "Disease Distribution")
-    
+        self.tabs.addTab(tab, "Disease Distribution")        
     def create_trend_analysis_tab(self):
         tab = QWidget()
         layout = QVBoxLayout()

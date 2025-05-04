@@ -5,345 +5,878 @@ import oracledb
 
 # New Imports for workspace widgets
 from .patient import PatientWidget
+from .dashboard import DiseaseStatsDashboard  # Import DiseaseStatsDashboard from its module
+from .workerTiming import WorkerTimingSpace  # Import WorkerTimingSpace from its module
 
 
 # ------------------------- HomePage (Login Window) -------------------------
 class HomePage(QtWidgets.QWidget):
     def __init__(self, main_window=None, parent=None):
         super().__init__(parent)
-        self.main_window = main_window  # Reference to the QStackedWidget
-        print("HomePage initialized with main_window:", self.main_window)
-        self.is_signup_mode = False  # Track whether we're in login or signup mode
+        self.main_window = main_window
+        self.is_signup_mode = False
         self.setup_ui()
+        # Start with animation
+        self.animate_login_appearance()
 
     def setup_ui(self):
-        self.setStyleSheet("background-color: white;")  # Main background color
-
-        # Create QLabel to hold the background image
+        # Set main properties
+        self.setStyleSheet("background-color: #f0f2f5;")
+        
+        # Create a blur effect for background
+        self.blur_effect = QtWidgets.QGraphicsBlurEffect()
+        self.blur_effect.setBlurRadius(10)
+        
+        # Background image with parallax effect
         self.bg_label = QtWidgets.QLabel(self)
+        self.bg_label.setObjectName("BackgroundLabel")
+        self.bg_pixmap = QtGui.QPixmap("resources/hospital-bg3.jpg")
+
+        # Make sure the background label fills the entire window
         self.bg_label.setGeometry(0, 0, self.width(), self.height())
-        pixmap = QtGui.QPixmap("resources/hospital-bg3.jpg")
-        self.bg_label.setPixmap(pixmap)
-        self.bg_label.setScaledContents(True)
+        self.bg_label.setScaledContents(True)  # This ensures the image scales to fill the label
+        self.bg_label.setPixmap(self.bg_pixmap)
+        self.bg_label.lower()  # Move to bottom layer
+        
+        # Create the main scroll area that will contain everything
+        self.scroll_area = QtWidgets.QScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("background-color: transparent; border: none;")
+        
+        # Create a container widget for the scroll area
+        self.scroll_container = QtWidgets.QWidget()
+        self.scroll_container.setStyleSheet("background-color: transparent;")
+        
+        # Main layout for scroll container
+        self.scroll_layout = QtWidgets.QVBoxLayout(self.scroll_container)
+        self.scroll_layout.setAlignment(QtCore.Qt.AlignCenter)
+        self.scroll_layout.setSpacing(20)
+        
+        # Overlay for depth effect
+        self.overlay = QtWidgets.QWidget(self)
+        self.overlay.setStyleSheet("background-color: rgba(0, 0, 0, 0.4);")
+        self.overlay.setGeometry(0, 0, self.width(), self.height())
+        
+        # Create hospital logo/icon
+        self.logo_label = QtWidgets.QLabel()
+        logo_pixmap = QtGui.QPixmap("resources/hospital-logo.png")
+        if logo_pixmap.isNull():
+            # Create a fallback icon if image doesn't exist
+            self.logo_label.setText("🏥")
+            self.logo_label.setFont(QtGui.QFont("Segoe UI", 48))
+            self.logo_label.setStyleSheet("color: white; background-color: transparent;")
+        else:
+            self.logo_label.setPixmap(logo_pixmap.scaled(80, 80, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+        
+        self.logo_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.logo_label.setFixedHeight(100)
+        self.scroll_layout.addWidget(self.logo_label)
 
-        # Main layout
-        self.main_layout = QtWidgets.QVBoxLayout(self)
-        self.main_layout.setAlignment(QtCore.Qt.AlignCenter)
-
-        # Frame for Login Form
-        self.login_frame = QtWidgets.QFrame(self)
-        self.login_frame.setFixedSize(400, 350)
+        # Login Card Frame with glass morphism effect
+        self.login_frame = QtWidgets.QFrame()
+        self.login_frame.setFixedSize(400, 500)  # Initially height is 0 for animation
         self.login_frame.setStyleSheet("""
             QFrame {
-                background-color: rgba(0, 0, 0, 0.8);
-                border-radius: 15px;
-                border: 1px solid #E0E0E0;
+                background-color: rgba(255, 255, 255, 0.85);
+                border-radius: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
             }
         """)
+        
+        # Add shadow effect to login frame
+        shadow = QtWidgets.QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QtGui.QColor(0, 0, 0, 100))
+        shadow.setOffset(0, 5)
+        self.login_frame.setGraphicsEffect(shadow)
+        
+        # Login form layout
+        self.login_layout = QtWidgets.QVBoxLayout(self.login_frame)
+        self.login_layout.setAlignment(QtCore.Qt.AlignTop)
+        self.login_layout.setSpacing(15)
+        self.login_layout.setContentsMargins(30, 30, 30, 50)
 
-        login_layout = QtWidgets.QVBoxLayout(self.login_frame)
-        login_layout.setAlignment(QtCore.Qt.AlignCenter)
-        login_layout.setSpacing(15)
-        login_layout.setContentsMargins(20, 20, 20, 20)
-
-        # Title
-        self.title_label = QtWidgets.QLabel("Hospital Login")
-        self.title_label.setFont(QtGui.QFont("Segoe UI", 18, QtGui.QFont.Bold))
-        self.title_label.setStyleSheet("color: #0078D4;")
+        # Title with dynamic color
+        self.title_label = QtWidgets.QLabel("Welcome Back")
+        title_font = QtGui.QFont("Segoe UI", 24, QtGui.QFont.Bold)
+        self.title_label.setFont(title_font)
+        self.title_label.setStyleSheet("color: #1a237e; margin-bottom: 10px;")
         self.title_label.setAlignment(QtCore.Qt.AlignCenter)
-        login_layout.addWidget(self.title_label)
+        self.login_layout.addWidget(self.title_label)
+        
+        # Subtitle
+        self.subtitle_label = QtWidgets.QLabel("Sign in to continue")
+        self.subtitle_label.setFont(QtGui.QFont("Segoe UI", 12))
+        self.subtitle_label.setStyleSheet("color: #757575; margin-bottom: 15px;")
+        self.subtitle_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.login_layout.addWidget(self.subtitle_label)
 
-        # Username Input
+        # Username/Worker ID Input with icon
+        self.username_container = QtWidgets.QWidget()
+        username_layout = QtWidgets.QHBoxLayout(self.username_container)
+        username_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.username_icon = QtWidgets.QLabel()
+        self.username_icon.setFixedSize(20, 20)
+        self.username_icon.setPixmap(self.create_icon("person"))
+        username_layout.addWidget(self.username_icon)
+        
         self.username_input = QtWidgets.QLineEdit()
-        self.username_input.setPlaceholderText("worker id")
-        self.username_input.setFixedHeight(40)
+        self.username_input.setPlaceholderText("Worker ID")
+        self.username_input.setFixedHeight(50)
         self.username_input.setStyleSheet("""
             QLineEdit {
-                background-color: #F5F5F5;
-                border: 1px solid #D3D3D3;
-                border-radius: 5px;
+                border: none;
+                border-bottom: 2px solid #3f51b5;
+                background-color: transparent;
                 padding-left: 10px;
-                font-size: 14px;
+                font-size: 16px;
+                font-family: 'Segoe UI';
+            }
+            QLineEdit:focus {
+                border-bottom: 2px solid #5c6bc0;
             }
         """)
-        login_layout.addWidget(self.username_input)
-
-        # Additional fields for signup (initially hidden)
+        username_layout.addWidget(self.username_input)
+        self.login_layout.addWidget(self.username_container)
+        
+        # Signup fields (initially hidden)
+        self.signup_fields_widget = QtWidgets.QWidget()
+        signup_fields_layout = QtWidgets.QVBoxLayout(self.signup_fields_widget)
+        signup_fields_layout.setContentsMargins(0, 0, 0, 0)
+        signup_fields_layout.setSpacing(30)  # Increased spacing between signup fields
+        
+        # Full Name Input
+        self.fullname_container = QtWidgets.QWidget()
+        fullname_layout = QtWidgets.QHBoxLayout(self.fullname_container)
+        fullname_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.fullname_icon = QtWidgets.QLabel()
+        self.fullname_icon.setFixedSize(20, 20)
+        self.fullname_icon.setPixmap(self.create_icon("badge"))
+        fullname_layout.addWidget(self.fullname_icon)
+        
         self.fullname_input = QtWidgets.QLineEdit()
         self.fullname_input.setPlaceholderText("Full Name")
-        self.fullname_input.setFixedHeight(40)
+        self.fullname_input.setFixedHeight(45)
         self.fullname_input.setStyleSheet("""
             QLineEdit {
-                background-color: #F5F5F5;
-                border: 1px solid #D3D3D3;
-                border-radius: 5px;
+                border: none;
+                border-bottom: 2px solid #3f51b5;
+                background-color: transparent;
                 padding-left: 10px;
-                font-size: 14px;
+                font-size: 16px;
+                font-family: 'Segoe UI';
+            }
+            QLineEdit:focus {
+                border-bottom: 2px solid #5c6bc0;
             }
         """)
-        self.fullname_input.setVisible(False)
-        login_layout.addWidget(self.fullname_input)
-
+        fullname_layout.addWidget(self.fullname_input)
+        signup_fields_layout.addWidget(self.fullname_container)
+        
+        # Role Selection
+        self.role_container = QtWidgets.QWidget()
+        role_layout = QtWidgets.QHBoxLayout(self.role_container)
+        role_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.role_icon = QtWidgets.QLabel()
+        self.role_icon.setFixedSize(20, 20)
+        self.role_icon.setPixmap(self.create_icon("work"))
+        role_layout.addWidget(self.role_icon)
+        
         self.role_input = QtWidgets.QComboBox()
-        self.role_input.addItems(["Doctor", "Nurse", "Surgeon", "Paramedic"])
-        self.role_input.setFixedHeight(40)
+        self.role_input.addItems(["Doctor", "Nurse", "Surgeon", "Paramedic", "Administrator"])
+        self.role_input.setFixedHeight(45)
         self.role_input.setStyleSheet("""
             QComboBox {
-                background-color: #F5F5F5;
-                border: 1px solid #D3D3D3;
-                border-radius: 5px;
+                border: none;
+                border-bottom: 2px solid #3f51b5;
+                background-color: transparent;
                 padding-left: 10px;
-                font-size: 14px;
+                font-size: 16px;
+                font-family: 'Segoe UI';
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 30px;
+            }
+            QComboBox::down-arrow {
+                image: url(resources/down-arrow.png);
+                width: 16px;
+                height: 16px;
             }
             QComboBox QAbstractItemView {
-                background-color: white;  /* change dropdown background */
-                color: black;             /* text color of dropdown items */
-                selection-background-color: #87CEFA; /* background when item is selected */
-                selection-color: black;   /* text color when selected */
+                background-color: white;
+                border: 1px solid #e0e0e0;
+                selection-background-color: #e8eaf6;
+                selection-color: #3f51b5;
+                color: #212121;
             }
         """)
-        self.role_input.setVisible(False)
-        login_layout.addWidget(self.role_input)
-
+        role_layout.addWidget(self.role_input)
+        signup_fields_layout.addWidget(self.role_container)
+        
+        # Phone Number Input
+        self.phone_container = QtWidgets.QWidget()
+        phone_layout = QtWidgets.QHBoxLayout(self.phone_container)
+        phone_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.phone_icon = QtWidgets.QLabel()
+        self.phone_icon.setFixedSize(20, 20)
+        self.phone_icon.setPixmap(self.create_icon("phone"))
+        phone_layout.addWidget(self.phone_icon)
+        
         self.phone_input = QtWidgets.QLineEdit()
         self.phone_input.setPlaceholderText("Phone Number")
-        self.phone_input.setFixedHeight(40)
+        self.phone_input.setFixedHeight(45)
         self.phone_input.setStyleSheet("""
             QLineEdit {
-                background-color: #F5F5F5;
-                border: 1px solid #D3D3D3;
-                border-radius: 5px;
+                border: none;
+                border-bottom: 2px solid #3f51b5;
+                background-color: transparent;
                 padding-left: 10px;
-                font-size: 14px;
+                font-size: 16px;
+                font-family: 'Segoe UI';
+            }
+            QLineEdit:focus {
+                border-bottom: 2px solid #5c6bc0;
             }
         """)
-        self.phone_input.setVisible(False)
-        login_layout.addWidget(self.phone_input)
-
-        # Password Input
+        phone_layout.addWidget(self.phone_input)
+        signup_fields_layout.addWidget(self.phone_container)
+        
+        self.signup_fields_widget.setVisible(False)
+        self.login_layout.addWidget(self.signup_fields_widget)
+        
+        # Password Input with icon
+        self.password_container = QtWidgets.QWidget()
+        password_layout = QtWidgets.QHBoxLayout(self.password_container)
+        password_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.password_icon = QtWidgets.QLabel()
+        self.password_icon.setFixedSize(20, 20)
+        self.password_icon.setPixmap(self.create_icon("lock"))
+        password_layout.addWidget(self.password_icon)
+        
         self.password_input = QtWidgets.QLineEdit()
         self.password_input.setPlaceholderText("Password")
-        self.password_input.setFixedHeight(40)
+        self.password_input.setFixedHeight(50)
         self.password_input.setEchoMode(QtWidgets.QLineEdit.Password)
-        login_layout.addWidget(self.password_input)
-
-        # Show Password Checkbox
-        self.show_password = QtWidgets.QCheckBox("Show Password")
-        self.show_password.setStyleSheet("color: white; font-size: 12px; background: transparent;")
-        self.show_password.stateChanged.connect(self.toggle_password_visibility)
-        login_layout.addWidget(self.show_password)
-
-        # Create a horizontal layout for the buttons
-        btn_layout = QtWidgets.QHBoxLayout()
+        self.password_input.setStyleSheet("""
+            QLineEdit {
+                border: none;
+                border-bottom: 2px solid #3f51b5;
+                background-color: transparent;
+                padding-left: 10px;
+                font-size: 16px;
+                font-family: 'Segoe UI';
+            }
+            QLineEdit:focus {
+                border-bottom: 2px solid #5c6bc0;
+            }
+        """)
+        password_layout.addWidget(self.password_input)
         
-        # Login Button
-        self.login_button = QtWidgets.QPushButton("Login")
-        self.login_button.setFixedSize(100, 40)
+        # Show/Hide password button
+        self.show_password_btn = QtWidgets.QPushButton()
+        self.show_password_btn.setFixedSize(24, 24)
+        # Use text for eye icon if image doesn't exist
+        self.show_password_btn.setText("👁️")
+        self.show_password_btn.setStyleSheet("background: transparent; border: none; font-size: 16px;")
+        self.show_password_btn.setCursor(QtCore.Qt.PointingHandCursor)
+        self.show_password_btn.clicked.connect(self.toggle_password_visibility)
+        password_layout.addWidget(self.show_password_btn)
+        
+        self.login_layout.addWidget(self.password_container)
+        
+        # Remember me and Forgot password row
+        self.options_container = QtWidgets.QWidget()
+        options_layout = QtWidgets.QHBoxLayout(self.options_container)
+        options_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.remember_me = QtWidgets.QCheckBox("Remember me")
+        self.remember_me.setStyleSheet("""
+            QCheckBox {
+                font-size: 14px;
+                font-family: 'Segoe UI';
+                color: #616161;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+                border: 2px solid #9fa8da;
+                border-radius: 3px;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #3f51b5;
+                border: 2px solid #3f51b5;
+            }
+        """)
+        options_layout.addWidget(self.remember_me, alignment=QtCore.Qt.AlignCenter)
+        
+        self.login_layout.addWidget(self.options_container)
+        
+        # Login Button (Gradient effect)
+        self.login_button = QtWidgets.QPushButton("Sign In")
+        self.login_button.setFixedHeight(50)
+        self.login_button.setFont(QtGui.QFont("Segoe UI", 14, QtGui.QFont.Bold))
         self.login_button.setStyleSheet("""
             QPushButton {
-                background-color: #0078D4;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #303f9f, stop:1 #3f51b5);
                 color: white;
-                font-size: 16px;
-                border-radius: 5px;
+                border-radius: 25px;
                 border: none;
             }
             QPushButton:hover {
-                background-color: #005A9E;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3949ab, stop:1 #5c6bc0);
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #283593, stop:1 #3f51b5);
             }
         """)
+        self.login_button.setCursor(QtCore.Qt.PointingHandCursor)
         self.login_button.clicked.connect(self.handle_login)
-        btn_layout.addWidget(self.login_button, alignment=QtCore.Qt.AlignLeft)
+        self.login_layout.addWidget(self.login_button)
+        
+        # Horizontal line with "or" text
+        self.separator_widget = QtWidgets.QWidget()
+        separator_layout = QtWidgets.QHBoxLayout(self.separator_widget)
+        separator_layout.setContentsMargins(0, 10, 0, 10)
+        
+        self.left_line = QtWidgets.QFrame()
+        self.left_line.setFrameShape(QtWidgets.QFrame.HLine)
+        self.left_line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.left_line.setStyleSheet("background-color: #e0e0e0;")
+        separator_layout.addWidget(self.left_line)
+        
+        self.or_label = QtWidgets.QLabel("OR")
+        self.or_label.setStyleSheet("color: #9e9e9e; font-size: 14px;")
+        self.or_label.setFixedWidth(40)
+        self.or_label.setAlignment(QtCore.Qt.AlignCenter)
+        separator_layout.addWidget(self.or_label)
+        
+        self.right_line = QtWidgets.QFrame()
+        self.right_line.setFrameShape(QtWidgets.QFrame.HLine)
+        self.right_line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.right_line.setStyleSheet("background-color: #e0e0e0;")
+        separator_layout.addWidget(self.right_line)
+        
+        self.login_layout.addWidget(self.separator_widget)
         
         # Sign Up Button
-        self.signup_button = QtWidgets.QPushButton("Sign Up")
-        self.signup_button.setFixedSize(100, 40)
+        self.signup_button = QtWidgets.QPushButton("Create New Account")
+        self.signup_button.setFixedHeight(50)
+        self.signup_button.setFont(QtGui.QFont("Segoe UI", 14))
         self.signup_button.setStyleSheet("""
             QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                font-size: 16px;
-                border-radius: 5px;
-                border: none;
+                background-color: transparent;
+                color: #3f51b5;
+                border: 2px solid #3f51b5;
+                border-radius: 25px;
             }
             QPushButton:hover {
-                background-color: #388E3C;
+                background-color: rgba(63, 81, 181, 0.1);
+            }
+            QPushButton:pressed {
+                background-color: rgba(63, 81, 181, 0.2);
             }
         """)
+        self.signup_button.setCursor(QtCore.Qt.PointingHandCursor)
         self.signup_button.clicked.connect(self.toggle_signup_mode)
-        btn_layout.addWidget(self.signup_button, alignment=QtCore.Qt.AlignRight)
+        self.login_layout.addWidget(self.signup_button)
         
-        login_layout.addLayout(btn_layout)
-
-        # Message Label (Initially Invisible)
+        # Message label for feedback
         self.message_label = QtWidgets.QLabel("")
         self.message_label.setAlignment(QtCore.Qt.AlignCenter)
         self.message_label.setStyleSheet("""
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: transparent;
             color: transparent;
-            border: 1px solid rgba(0, 0, 0, 0.8);
-            padding: 5px;
+            padding: 10px;
             border-radius: 5px;
             font-size: 14px;
+            font-family: 'Segoe UI';
         """)
-        self.message_label.setFixedHeight(30)
+        self.message_label.setFixedHeight(0)  # Hidden initially
         self.message_label.setVisible(False)
-        login_layout.addWidget(self.message_label)
+        self.login_layout.addWidget(self.message_label)
+        
+        # Add Login Frame to scroll layout
+        self.scroll_layout.addWidget(self.login_frame, alignment=QtCore.Qt.AlignCenter)
+        
+        # Set the scroll container as the widget for the scroll area
+        self.scroll_area.setWidget(self.scroll_container)
+        
+        # Main layout for the entire widget
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(self.scroll_area)
+        self.setLayout(main_layout)
 
-        # Add Login Frame to Main Layout
-        self.main_layout.addWidget(self.login_frame)
+    def create_icon(self, icon_type):
+        """Create an icon for inputs based on type"""
+        icon_data = {
+            "person": (0, 0, 0, "👤"),
+            "badge": (0, 0, 0, "📛"),
+            "work": (0, 0, 0, "💼"),
+            "phone": (0, 0, 0, "📱"),
+            "lock": (0, 0, 0, "🔒"),
+            "eye": (0, 0, 0, "👁️")
+        }
+        
+        # Create a pixmap
+        pixmap = QtGui.QPixmap(20, 20)
+        pixmap.fill(QtCore.Qt.transparent)
+        
+        # Create painter
+        painter = QtGui.QPainter(pixmap)
+        painter.setFont(QtGui.QFont("Segoe UI", 12))
+        
+        # Get icon info
+        r, g, b, text = icon_data.get(icon_type, (0, 0, 0, "❓"))
+        
+        # Draw text
+        painter.setPen(QtGui.QColor(r, g, b))
+        painter.drawText(QtCore.QRect(0, 0, 20, 20), QtCore.Qt.AlignCenter, text)
+        painter.end()
+        
+        return pixmap
+
+    def animate_login_appearance(self):
+        # Set initial size
+        self.login_frame.setFixedWidth(400)
+        self.login_frame.setMinimumHeight(500)
+        
+        # Position it in the center but a bit higher up
+        x_pos = (self.width() - self.login_frame.width()) // 2
+        y_pos = (self.height() - self.login_frame.height()) // 2 - 50  # Move it up slightly
+        
+        # Animate from above into view
+        self.animation = QtCore.QPropertyAnimation(self.login_frame, b"pos")
+        self.animation.setDuration(500)
+        self.animation.setStartValue(QtCore.QPoint(x_pos, y_pos - 200))
+        self.animation.setEndValue(QtCore.QPoint(x_pos, y_pos))
+        self.animation.start()
 
     def toggle_password_visibility(self):
-        if self.show_password.isChecked():
+        """Toggle password visibility with animation"""
+        if self.password_input.echoMode() == QtWidgets.QLineEdit.Password:
             self.password_input.setEchoMode(QtWidgets.QLineEdit.Normal)
+            self.show_password_btn.setText("🔒")  # Use lock emoji for hidden state
         else:
             self.password_input.setEchoMode(QtWidgets.QLineEdit.Password)
+            self.show_password_btn.setText("👁️")  # Use eye emoji for visible state
 
+    def resizeEvent(self, event):
+        """Handle resize events properly"""
+        # Update background label to fill the window
+        self.bg_label.setGeometry(0, 0, self.width(), self.height())
+        
+        # Update overlay size to match the window
+        self.overlay.setGeometry(0, 0, self.width(), self.height())
+        
+        # Call the original resize event
+        super().resizeEvent(event)
+
+    def showEvent(self, event):
+        """Handle window show event to properly position elements"""
+        super().showEvent(event)
+        # Update background and overlay to match the window size
+        self.bg_label.setGeometry(0, 0, self.width(), self.height())
+        self.overlay.setGeometry(0, 0, self.width(), self.height())
+        self.overlay.lower()
     def toggle_signup_mode(self):
         self.is_signup_mode = not self.is_signup_mode
         
+        # Create height animation
+        self.height_anim = QtCore.QPropertyAnimation(self.login_frame, b"minimumHeight")
+        self.height_anim.setDuration(300)
+        
+        # Create position animation to adjust scroll position
+        self.pos_anim = QtCore.QPropertyAnimation(self.login_frame, b"pos")
+        self.pos_anim.setDuration(300)
+        current_pos = self.login_frame.pos()
+        
         # Update UI based on mode
         if self.is_signup_mode:
-            self.title_label.setText("Hospital Sign Up")
-            self.login_button.setText("Cancel")
+            self.title_label.setText("Create Account")
+            self.subtitle_label.setText("Join our medical team")
+            self.login_button.setText("Back to Login")
             self.signup_button.setText("Register")
-            self.fullname_input.setVisible(True)
-            self.role_input.setVisible(True)
-            self.phone_input.setVisible(True)
-            # Adjust frame size to fit all elements
-            self.login_frame.setFixedSize(400, 500)
+            
+            # Start animation to expand - INCREASED HEIGHT for better spacing
+            self.height_anim.setStartValue(self.login_frame.height())
+            self.height_anim.setEndValue(700)  # Increased height even more for better spacing
+            
+            # Move frame up for better visibility
+            self.pos_anim.setStartValue(current_pos)
+            self.pos_anim.setEndValue(QtCore.QPoint(current_pos.x(), current_pos.y() - 100))
+            
+            # Show signup fields with fade effect
+            self.signup_fields_widget.setVisible(True)
+            self.signup_fields_widget.setStyleSheet("""
+                QLineEdit, QComboBox {
+                    border: none;
+                    border-bottom: 2px solid #3f51b5;
+                    background-color: transparent;
+                    padding-left: 10px;
+                    font-size: 16px;
+                    font-family: 'Segoe UI';
+                }
+                QLineEdit:focus, QComboBox:focus {
+                    border-bottom: 2px solid #5c6bc0;
+                }
+            """)
+            
+            # Create opacity animation for fields
+            self.opacity_anim = QtCore.QPropertyAnimation(self.signup_fields_widget, b"styleSheet")
+            self.opacity_anim.setDuration(400)
+            self.opacity_anim.setStartValue("opacity: 0;")
+            self.opacity_anim.setEndValue("opacity: 1;")
+            
+            # Create animation group
+            self.anim_group = QtCore.QParallelAnimationGroup()
+            self.anim_group.addAnimation(self.height_anim)
+            self.anim_group.addAnimation(self.opacity_anim)
+            self.anim_group.addAnimation(self.pos_anim)
+            self.anim_group.start()
+            
             # Change button function
             self.signup_button.clicked.disconnect()
             self.signup_button.clicked.connect(self.handle_signup)
+            
+            # Update separator text
+            self.or_label.setText("OR")
+            
+            # Scroll to make sure the full form is visible
+            QtCore.QTimer.singleShot(100, lambda: self.scroll_area.ensureWidgetVisible(self.signup_button))
         else:
-            self.title_label.setText("Hospital Login")
-            self.login_button.setText("Login")
-            self.signup_button.setText("Sign Up")
-            self.fullname_input.setVisible(False)
-            self.role_input.setVisible(False)
-            self.phone_input.setVisible(False)
-            # Reset frame size
-            self.login_frame.setFixedSize(400, 350)
-            # Reset button function
+            self.title_label.setText("Welcome Back")
+            self.subtitle_label.setText("Sign in to continue")
+            self.login_button.setText("Sign In")
+            self.signup_button.setText("Create New Account")
+            
+            # Start animation to shrink
+            self.height_anim.setStartValue(self.login_frame.height())
+            self.height_anim.setEndValue(500)
+            
+            # Move frame back down
+            self.pos_anim.setStartValue(current_pos)
+            self.pos_anim.setEndValue(QtCore.QPoint(current_pos.x(), current_pos.y() + 100))
+            
+            # Create animation group for return to login
+            self.anim_group = QtCore.QParallelAnimationGroup()
+            self.anim_group.addAnimation(self.height_anim)
+            self.anim_group.addAnimation(self.pos_anim)
+            self.anim_group.start()
+            
+            # Hide signup fields
+            self.signup_fields_widget.setVisible(False)
+            
+            # Change button function
             self.signup_button.clicked.disconnect()
             self.signup_button.clicked.connect(self.toggle_signup_mode)
             
+            # Update separator text
+            self.or_label.setText("OR")
+            
+            # Scroll to see the full login form
+            QtCore.QTimer.singleShot(100, lambda: self.scroll_area.ensureWidgetVisible(self.login_button))
+        
         # Clear any previous messages
-        self.message_label.setVisible(False)
+        self.hide_message()
 
     def display_message(self, message, success):
+        """Display message with slide-down animation"""
         self.message_label.setText(message)
-        self.message_label.setVisible(True)
+        
+        # Set appropriate style
         if success:
             self.message_label.setStyleSheet("""
-                background-color: #4CAF50;
+                background-color: #4caf50;
                 color: white;
-                padding: 5px;
+                padding: 10px;
                 border-radius: 5px;
                 font-size: 14px;
+                font-family: 'Segoe UI';
             """)
         else:
             self.message_label.setStyleSheet("""
-                background-color: #F44336;
-                color: #D3D3D3;
-                padding: 5px;
+                background-color: #f44336;
+                color: white;
+                padding: 10px;
                 border-radius: 5px;
                 font-size: 14px;
+                font-family: 'Segoe UI';
             """)
+        
+        # Show with animation
+        self.message_label.setVisible(True)
+        
+        # Create height animation
+        self.msg_animation = QtCore.QPropertyAnimation(self.message_label, b"minimumHeight")
+        self.msg_animation.setDuration(200)
+        self.msg_animation.setStartValue(0)
+        self.msg_animation.setEndValue(40)
+        self.msg_animation.start()
+        
+        # Auto-hide message after 4 seconds
+        QtCore.QTimer.singleShot(4000, self.hide_message)
 
+    def hide_message(self):
+        """Hide message with slide-up animation"""
+        if self.message_label.isVisible():
+            # Create hide animation
+            self.msg_hide_animation = QtCore.QPropertyAnimation(self.message_label, b"minimumHeight")
+            self.msg_hide_animation.setDuration(200)
+            self.msg_hide_animation.setStartValue(self.message_label.height())
+            self.msg_hide_animation.setEndValue(0)
+            self.msg_hide_animation.finished.connect(lambda: self.message_label.setVisible(False))
+            self.msg_hide_animation.start()
+
+    def shake_animation(self, widget):
+        """Create a shake animation for error feedback"""
+        animation = QtCore.QPropertyAnimation(widget, b"pos")
+        animation.setDuration(200)
+        animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
+        
+        original_pos = widget.pos()
+        
+        # Define shake positions
+        positions = [
+            original_pos + QtCore.QPoint(-10, 0),
+            original_pos + QtCore.QPoint(10, 0),
+            original_pos + QtCore.QPoint(-10, 0),
+            original_pos + QtCore.QPoint(10, 0),
+            original_pos
+        ]
+        
+        # Add positions to animation
+        for i, pos in enumerate(positions):
+            animation.setKeyValueAt(i/4, pos)
+        
+        animation.start()
+
+
+    # ------------------------- Signup Handling -------------------------
+    def handle_signup(self):
+        """Handle signup button press and ensure scrolling & spacing adjustments."""
+        # Ensure the main scroll area shows scrollbars as needed
+        self.scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+
+        # Adjust spacing between signup fields dynamically in case layout was not applied
+        if self.signup_fields_widget.layout():
+            self.signup_fields_widget.layout().setSpacing(40)
+
+        # Gather input values
+        worker_id = self.username_input.text().strip()
+        password = self.password_input.text().strip()
+        full_name = self.fullname_input.text().strip()
+        role = self.role_input.currentText()
+        phone = self.phone_input.text().strip()
+
+        # Validate inputs
+        if not worker_id or not password or not full_name or not phone:
+            self.display_message("Please fill in all fields", False)
+            self.shake_animation(self.login_frame)
+            # Scroll to top of the form to show the message
+            QtCore.QTimer.singleShot(50, lambda: self.scroll_area.verticalScrollBar().setValue(0))
+            return
+
+        # Show loading state on signup button
+        self.signup_button.setText("Registering...")
+        self.signup_button.setEnabled(False)
+
+        # Simulate processing delay before actual DB logic
+        QtCore.QTimer.singleShot(
+            800,
+            lambda: self.process_signup(worker_id, password, full_name, role, phone)
+        )
+
+
+    # ------------------------- Process Signup -------------------------
+    def process_signup(self, worker_id, password, full_name, role, phone):
+        """Perform the actual signup database insertion."""
+        try:
+            connection = oracledb.connect(
+                # user="system",
+                # password="Abdo2004@",
+                # dsn="localhost:1521/FREE"
+                user="system", 
+                password="s2004b22", 
+                dsn="192.168.21.1:1521/FREE"
+            )
+            cursor = connection.cursor()
+
+            # Check for existing worker_id
+            check_query = """
+                SELECT COUNT(*) FROM employees
+                WHERE worker_id = :worker_id
+            """
+            cursor.execute(check_query, {"worker_id": worker_id})
+            exists = cursor.fetchone()[0] > 0
+
+            if exists:
+                self.display_message("Worker ID already exists!", False)
+                self.shake_animation(self.login_frame)
+                self.signup_button.setText("Register")
+                self.signup_button.setEnabled(True)
+                # Scroll to show the error
+                QtCore.QTimer.singleShot(
+                    50,
+                    lambda: self.scroll_area.verticalScrollBar().setValue(
+                        self.scroll_area.verticalScrollBar().maximum()
+                    )
+                )
+                return
+
+            # Insert the new employee record
+            insert_query = """
+                INSERT INTO employees
+                (worker_id, password, full_name, role, phone_number)
+                VALUES
+                (:worker_id, :password, :full_name, :role, :phone)
+            """
+            cursor.execute(insert_query, {
+                "worker_id": worker_id,
+                "password": password,
+                "full_name": full_name,
+                "role": role,
+                "phone": phone
+            })
+            connection.commit()
+
+            # Success feedback
+            self.display_message("Account created successfully!", True)
+
+            # After a short delay, switch back to login mode
+            QtCore.QTimer.singleShot(1500, self.toggle_signup_mode)
+
+        except oracledb.DatabaseError as e:
+            # Handle database errors gracefully
+            self.display_message(f"Database Error: {str(e)}", False)
+            self.shake_animation(self.login_frame)
+        finally:
+            # Restore signup button state
+            self.signup_button.setText("Register")
+            self.signup_button.setEnabled(True)
+            # Clean up DB resources
+            try:
+                cursor.close()
+                connection.close()
+            except:
+                pass
+
+
+    # ------------------------- Login Handling -------------------------
     def handle_login(self):
-        # Handle cancel button press when in signup mode
+        """Handle login button press, including canceling signup if active."""
+        # If currently in signup mode, treat this as a cancel action
         if self.is_signup_mode:
             self.toggle_signup_mode()
             return
-        
-        print("handle_login() called")
+
         worker_id = self.username_input.text().strip()
         password = self.password_input.text().strip()
 
         if not worker_id or not password:
-            print("Missing worker_id or password")
-            self.display_message("Please enter both Worker ID and Password.", success=False)
+            self.display_message("Please enter both Worker ID and Password", False)
+            self.shake_animation(self.login_frame)
             return
 
+        # Show loading state
+        self.login_button.setText("Signing In...")
+        self.login_button.setEnabled(False)
+
+        # Simulate processing delay before actual login logic
+        QtCore.QTimer.singleShot(800, lambda: self.process_login(worker_id, password))
+
+
+    # ------------------------- Process Login -------------------------
+    def process_login(self, worker_id, password):
+        """Perform the actual login verification against the database."""
         try:
-            print("Attempting database connection...")
-            connection = oracledb.connect(user="system", password="Abdo2004@", dsn="localhost:1521/FREE")
+            connection = oracledb.connect(
+                # user="system",
+                # password="Abdo2004@",
+                # dsn="localhost:1521/FREE"
+                user="system", 
+                password="s2004b22", 
+                dsn="192.168.21.1:1521/FREE"
+            )
             cursor = connection.cursor()
-            
-            # Fetch full_name, role, and password
-            query = "SELECT full_name, role, password FROM employees WHERE worker_id = :worker_id"
+
+            # Fetch stored credentials
+            query = """
+                SELECT full_name, role, password
+                FROM employees
+                WHERE worker_id = :worker_id
+            """
             cursor.execute(query, {"worker_id": worker_id})
             result = cursor.fetchone()
-            print("Database query executed, result:", result)
 
+            # Verify credentials
             if result and result[2] == password:
                 full_name, role = result[0], result[1]
-                print(f"Login successful! User: {full_name}, Role: {role}")
-                
-                # Create and show the centered splash screen
-                if self.main_window:
-                    splash = SplashScreen(self.main_window, worker_id, full_name, role)
-                    self.main_window.addWidget(splash)
-                    self.main_window.setCurrentWidget(splash)
-                else:
-                    self.hide()
+                print("Login successful, proceeding to main")
+                # Show success message
+                self.display_message(f"Welcome back, {full_name}!", True)
+
+                # Update login button style to success
+                self.login_button.setText("Success!")
+                self.login_button.setStyleSheet("""
+                    QPushButton {
+                        background: qlineargradient(
+                            x1:0, y1:0, x2:1, y2:0,
+                            stop:0 #2e7d32, stop:1 #4caf50
+                        );
+                        color: white;
+                        border-radius: 25px;
+                        border: none;
+                    }
+                """)
+
+                # Proceed to main UI after a brief pause
+                QtCore.QTimer.singleShot(
+                    1000,
+                    lambda: self.proceed_to_main(worker_id, full_name, role)
+                )
             else:
-                print("Login failed: incorrect credentials")
-                self.display_message("Login Failed. Incorrect Worker ID or Password.", success=False)
+                # Invalid credentials feedback
+                self.display_message("Invalid Worker ID or Password", False)
+                self.shake_animation(self.login_frame)
+
+                # Restore login button
+                self.login_button.setText("Sign In")
+                self.login_button.setEnabled(True)
+                self.login_button.setStyleSheet("""
+                    QPushButton {
+                        background: qlineargradient(
+                            x1:0, y1:0, x2:1, y2:0,
+                            stop:0 #303f9f, stop:1 #3f51b5
+                        );
+                        color: white;
+                        border-radius: 25px;
+                        border: none;
+                    }
+                    QPushButton:hover {
+                        background: qlineargradient(
+                            x1:0, y1:0, x2:1, y2:0,
+                            stop:0 #3949ab, stop:1 #5c6bc0
+                        );
+                    }
+                    QPushButton:pressed {
+                        background: qlineargradient(
+                            x1:0, y1:0, x2:1, y2:0,
+                            stop:0 #283593, stop:1 #3f51b5
+                        );
+                    }
+                """)
         except oracledb.DatabaseError as e:
-            print("Database error:", e)
-            self.display_message(f"Database Error: {str(e)}", success=False)
-        finally:
-            try:
-                cursor.close()
-                connection.close()
-                print("Database connection closed.")
-            except Exception as e:
-                print("Error closing database connection:", e)
-
-    def handle_signup(self):
-        worker_id = self.username_input.text().strip()
-        full_name = self.fullname_input.text().strip()
-        role = self.role_input.currentText()
-        phone = self.phone_input.text().strip()
-        password = self.password_input.text().strip()
-
-        # Validate inputs
-        if not worker_id or not full_name or not password or not phone:
-            self.display_message("Please fill all fields.", success=False)
-            return
-
-        try:
-            connection = oracledb.connect(user="system", password="Abdo2004@", dsn="localhost:1521/FREE")
-            cursor = connection.cursor()
-            
-            # Check if worker_id already exists
-            cursor.execute("SELECT COUNT(*) FROM employees WHERE worker_id = :worker_id", {"worker_id": worker_id})
-            if cursor.fetchone()[0] > 0:
-                self.display_message("Worker ID already exists!", success=False)
-                return
-                
-            # Insert new employee
-            insert_query = """
-                INSERT INTO employees (worker_id, full_name, role, CONTACT_NUMBER, password) 
-                VALUES (:worker_id, :full_name, :role, :CONTACT_NUMBER, :password)
-            """
-            cursor.execute(insert_query, {
-                "worker_id": worker_id,
-                "full_name": full_name,
-                "role": role,
-                "CONTACT_NUMBER": phone,
-                "password": password
-            })
-            connection.commit()
-            
-            self.display_message("Registration successful! You can now login.", success=True)
-            # Switch back to login mode after successful registration
-            self.toggle_signup_mode()
-            
-        except oracledb.DatabaseError as e:
-            print("Database error:", e)
-            self.display_message(f"Registration Error: {str(e)}", success=False)
+            self.display_message(f"Database Error: {str(e)}", False)
+            self.login_button.setText("Sign In")
+            self.login_button.setEnabled(True)
         finally:
             try:
                 cursor.close()
@@ -351,92 +884,164 @@ class HomePage(QtWidgets.QWidget):
             except:
                 pass
 
-    def resizeEvent(self, event):
-        self.bg_label.setGeometry(0, 0, self.width(), self.height())
+
+    # ------------------------- Transition to Main -------------------------
+    def proceed_to_main(self, worker_id, full_name, role):
+   
+     print("proceed_to_main called")  # Debug
+     if self.main_window:
+        # Store the transition parameters as instance variables
+        self._transition_worker_id = worker_id
+        self._transition_full_name = full_name
+        self._transition_role = role
+        
+        # Create fade animation
+        self.fade_anim = QtCore.QPropertyAnimation(self, b"windowOpacity")
+        self.fade_anim.setDuration(500)
+        self.fade_anim.setStartValue(1.0)
+        self.fade_anim.setEndValue(0.0)
+        
+        # Connect signal using lambda with stored parameters
+        self.fade_anim.finished.connect(
+            lambda: self.show_splash_screen(
+                self._transition_worker_id,
+                self._transition_full_name,
+                self._transition_role
+            )
+        )
+        self.fade_anim.start()
+     else:
+        print("No main_window reference!")  # Debug
+
+
+    # ------------------------- Splash Screen -------------------------
+    def show_splash_screen(self, worker_id, full_name, role):
+     print("Attempting to show splash screen")  # Debug
+     if self.main_window:
+        print(f"Main window exists: {self.main_window}")  # Debug
+        splash = SplashScreen(self.main_window, worker_id, full_name, role)
+        self.main_window.addWidget(splash)
+        self.main_window.setCurrentWidget(splash)
+        print("Splash screen should be visible now")  # Debug
+        
+        QtCore.QTimer.singleShot(2000, 
+            lambda: self.show_workspace(worker_id, full_name, role))
+# in show_splash_screen
+    # ------------------------- Main Workspace -------------------------
+    def show_workspace(self, worker_id, full_name, role):
+        """Load and display the main application workspace."""
+        # remember if there was an active workspace
+        print("Timer fired, showing workspace") 
+        active_ws = MainWindow.active_workspace
+ 
+        # create the real main window (your workspace)
+        workspace = MainWindow(
+            worker_id,
+            full_name,
+            role,
+            main_window=self.main_window
+        )
+        self.main_window.addWidget(workspace)
+        self.main_window.setCurrentWidget(workspace)
+
+        # if the user had an active page before, restore it
+        if active_ws:
+            workspace.handle_workspace_click(None, active_ws)
+
+        # fade it in
+        fade_in = QtCore.QPropertyAnimation(workspace, b"windowOpacity")
+        fade_in.setDuration(500)
+        fade_in.setStartValue(0.0)
+        fade_in.setEndValue(1.0)
+        fade_in.start()
+
 
 # ------------------------- SplashScreen Widget -------------------------
 class SplashScreen(QtWidgets.QWidget):
     def __init__(self, main_window, worker_id, full_name, role, parent=None):
         super().__init__(parent)
-        self.main_window = main_window  # QStackedWidget reference
+        self.main_window = main_window
         self.worker_id = worker_id
         self.full_name = full_name
         self.role = role
 
-        # Remove window frame and set transparent background
+        # frameless & translucent so only our styled container shows
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.counter = 0
-        self.n = 100  
-        self.initUI()
+        self.n = 100  # total progress steps
+        self._init_ui()
+
+        # start a timer to drive the progress bar
         self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.loading)
+        self.timer.timeout.connect(self._loading_step)
         self.timer.start(30)
 
-    def initUI(self):
-    # Outer layout centers the splash container in the available space
-     layout = QtWidgets.QVBoxLayout(self)
-     layout.setAlignment(QtCore.Qt.AlignCenter)
+    def _init_ui(self):
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setAlignment(QtCore.Qt.AlignCenter)
 
-    # Container with the background image set via stylesheet.
-     container = QtWidgets.QWidget()
-    # Increase container size so it can hold all the content
-     container.setFixedSize(600, 400)
-     container.setStyleSheet("""
-        QWidget {
-            border-radius: 5px;
-            background-image: url('resources/splash1.jpg');
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: cover;
-        }
-    """)
-     container_layout = QtWidgets.QVBoxLayout(container)
-     container_layout.setContentsMargins(20, 20, 20, 20)
-     container_layout.setSpacing(10)
-     container_layout.setAlignment(QtCore.Qt.AlignCenter)
+        # big container with your splash image
+        container = QtWidgets.QWidget()
+        container.setFixedSize(600, 400)
+        container.setStyleSheet("""
+            QWidget {
+                border-radius: 5px;
+                background-image: url('resources/splash1.jpg');
+                background-repeat: no-repeat;
+                background-position: center;
+                background-size: cover;
+            }
+        """)
+        cl = QtWidgets.QVBoxLayout(container)
+        cl.setContentsMargins(20, 20, 20, 20)
+        cl.setSpacing(10)
+        cl.setAlignment(QtCore.Qt.AlignCenter)
 
-    # Welcome text (ensure it wraps if needed)
-     self.labelWelcome = QtWidgets.QLabel(f"WELCOME  {self.role} {self.full_name.upper()}")
-     self.labelWelcome.setAlignment(QtCore.Qt.AlignCenter)
-     self.labelWelcome.setWordWrap(True)
-     self.labelWelcome.setStyleSheet("color: black; font-size: 30px; font-weight: bold;")
-     container_layout.addWidget(self.labelWelcome)
+        # welcome text
+        self.labelWelcome = QtWidgets.QLabel(
+            f"WELCOME {self.role} {self.full_name.upper()}"
+        )
+        self.labelWelcome.setAlignment(QtCore.Qt.AlignCenter)
+        self.labelWelcome.setWordWrap(True)
+        self.labelWelcome.setStyleSheet(
+            "color: black; font-size: 30px; font-weight: bold;"
+        )
+        cl.addWidget(self.labelWelcome)
 
-    # Loading label
-     self.labelLoading = QtWidgets.QLabel("loading...")
-     self.labelLoading.setAlignment(QtCore.Qt.AlignCenter)
-     self.labelLoading.setStyleSheet("color: black; font-size: 16px;")
-     container_layout.addWidget(self.labelLoading)
+        # loading text
+        self.labelLoading = QtWidgets.QLabel("loading...")
+        self.labelLoading.setAlignment(QtCore.Qt.AlignCenter)
+        self.labelLoading.setStyleSheet("color: black; font-size: 16px;")
+        cl.addWidget(self.labelLoading)
 
-    # Progress bar
-     self.progressBar = QtWidgets.QProgressBar()
-     self.progressBar.setFixedHeight(30)
-     self.progressBar.setAlignment(QtCore.Qt.AlignCenter)
-     self.progressBar.setFormat('%p%')
-     self.progressBar.setTextVisible(True)
-     self.progressBar.setRange(0, self.n)
-     self.progressBar.setValue(0)
-     container_layout.addWidget(self.progressBar)
+        # progress bar
+        self.progressBar = QtWidgets.QProgressBar()
+        self.progressBar.setFixedHeight(30)
+        self.progressBar.setAlignment(QtCore.Qt.AlignCenter)
+        self.progressBar.setFormat('%p%')
+        self.progressBar.setRange(0, self.n)
+        self.progressBar.setValue(0)
+        cl.addWidget(self.progressBar)
 
-     layout.addWidget(container)
+        layout.addWidget(container)
 
-    def loading(self):
-        self.progressBar.setValue(self.counter)
-        if self.counter % 50 == 0:
-            print("Splash progress:", self.counter)
-        if self.counter == int(self.n * 0.3):
-            self.labelLoading.setText("loading... [30%]")
-        elif self.counter == int(self.n * 0.6):
-            self.labelLoading.setText("loading... [60%]")
-        elif self.counter >= self.n:
-            self.timer.stop()
-            # Once done, create the main application page
-            main_app_page = MainWindow(self.worker_id, self.full_name, self.role, main_window=self.main_window)
-            self.main_window.addWidget(main_app_page)
-            self.main_window.setCurrentWidget(main_app_page)
-        self.counter += 1
+    def _loading_step(self):
+     self.progressBar.setValue(self.counter)
+
+    # update loading text at milestones
+     if self.counter == int(self.n * 0.3):
+        self.labelLoading.setText("loading... [30%]")
+     elif self.counter == int(self.n * 0.6):
+        self.labelLoading.setText("loading... [60%]")
+
+    # once complete, stop the timer (but don't transition - that's handled by show_workspace)
+     if self.counter >= self.n:
+        self.timer.stop()
+        return
+
+     self.counter += 1
 
 # ------------------------- MainWindow (Main Application) -------------------------
 import random
@@ -448,8 +1053,11 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class MainWindow(QtWidgets.QWidget):
+    active_workspace = None
     def __init__(self, worker_id, full_name, role, main_window=None, parent=None):
         super().__init__(parent)
+        print(f"HomePage initialized with main_window: {main_window}")  # Debug
+        self.main_window = main_window
         self.worker_id = worker_id
         self.full_name = full_name
         self.role = role
@@ -549,26 +1157,52 @@ class MainWindow(QtWidgets.QWidget):
         bottom_bar.addWidget(logout_btn, alignment=QtCore.Qt.AlignLeft)
         outer_layout.addLayout(bottom_bar)
         self.setLayout(outer_layout)
-
+    
     def handle_workspace_click(self, event, workspace):
         """
         When a workspace card is clicked, load the corresponding widget from its module.
         """
+        MainWindow.active_workspace = workspace  # Set the active workspace
         if workspace == "Patients Space":
             widget = PatientWidget(self.worker_id, self.full_name, self.role, main_window=self.main_window)
         elif workspace == "Data Dashboard":
-            widget = DataWidget(self.worker_id, self.full_name, self.role, main_window=self.main_window)
+            widget = DiseaseStatsDashboard(self.worker_id, self.full_name, self.role, main_window=self.main_window)
         elif workspace == "Worker Timing":
-            widget = WorkerWidget(self.worker_id, self.full_name, self.role, main_window=self.main_window)
+            widget = WorkerTimingSpace(self.worker_id, self.full_name, self.role, main_window=self.main_window)
         else:
             return
         self.main_window.addWidget(widget)
         self.main_window.setCurrentWidget(widget)
 
     def logout(self):
-        # Return to the authentication page (assumed to be index 0 in the QStackedWidget)
-        if self.main_window:
-            self.main_window.setCurrentIndex(0)
+    # Reset the login page before switching back
+     login_page = self.main_window.widget(0)  # Assuming login page is at index 0
+     if isinstance(login_page, HomePage):
+        # Reset login button text and style
+        login_page.login_button.setText("Sign In")
+        login_page.login_button.setEnabled(True)
+        login_page.login_button.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #303f9f, stop:1 #3f51b5);
+                color: white;
+                border-radius: 25px;
+                border: none;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3949ab, stop:1 #5c6bc0);
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #283593, stop:1 #3f51b5);
+            }
+        """)
+        # Clear input fields
+        login_page.username_input.clear()
+        login_page.password_input.clear()
+        # Hide any messages
+        login_page.hide_message()
+        
+    # Return to the authentication page
+     self.main_window.setCurrentIndex(0)
 
     def create_user_info_card(self, worker_id, full_name, role):
         card = QtWidgets.QFrame(self)

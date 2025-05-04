@@ -141,9 +141,12 @@ class AdjustPatientDialog(QtWidgets.QDialog):
         cursor = None
         try:
             connection = oracledb.connect(
+                # user="system", 
+                # password="Abdo2004@", 
+                # dsn="localhost:1521/FREE"
                 user="system", 
-                password="Abdo2004@", 
-                dsn="localhost:1521/FREE"
+                password="s2004b22", 
+                dsn="192.168.21.1:1521/FREE"
             )
             cursor = connection.cursor()
             
@@ -252,9 +255,12 @@ class AdjustPatientDialog(QtWidgets.QDialog):
         cursor = None
         try:
             connection = oracledb.connect(
+                # user="system", 
+                # password="Abdo2004@", 
+                # dsn="localhost:1521/FREE"
                 user="system", 
-                password="Abdo2004@", 
-                dsn="localhost:1521/FREE"
+                password="s2004b22", 
+                dsn="192.168.21.1:1521/FREE"
             )
             cursor = connection.cursor()
             
