@@ -31,6 +31,7 @@ class Ui_MainWindow(object):
         # Create stacked layout for the two sidebar types
         self.sidebar_stacked_layout = QtWidgets.QStackedLayout(self.sidebar_container)
         self.sidebar_stacked_layout.setContentsMargins(0, 0, 0, 0)
+        self.sidebar_stacked_layout.setSpacing(0)  # Ensure no spacing between stacked widgets
         
         # --- Icons only sidebar ---
         self.icons_only_widget = QtWidgets.QWidget()
@@ -39,6 +40,10 @@ class Ui_MainWindow(object):
         self.icons_only_layout.setContentsMargins(10, 10, 10, 10)
         
         # Logo for icons-only sidebar
+        self.header_icons_layout = QtWidgets.QHBoxLayout()
+        self.header_icons_layout.setContentsMargins(0, 0, 0, 0)
+        self.header_icons_layout.setSpacing(0)
+        
         self.label = QtWidgets.QLabel()
         self.label.setMinimumSize(QtCore.QSize(50, 50))
         self.label.setMaximumSize(QtCore.QSize(50, 50))
@@ -46,16 +51,19 @@ class Ui_MainWindow(object):
         self.label.setPixmap(QtGui.QPixmap(":/icons/resources/iStock-471629610-Converted.png"))
         self.label.setScaledContents(True)
         self.label.setObjectName("label")
-        self.icons_only_layout.addWidget(self.label, 0, QtCore.Qt.AlignHCenter)
+        self.header_icons_layout.addWidget(self.label, 0, QtCore.Qt.AlignHCenter)
+        self.icons_only_layout.addLayout(self.header_icons_layout)
+        
+        # Add spacing to match the full sidebar header height
+        self.icons_only_layout.addSpacing(10)
         
         # Buttons for icons-only sidebar
         self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setSpacing(0)
+        self.verticalLayout.setSpacing(5)  # Consistent spacing with text sidebar
         
         # Home button
         self.home_btn = QtWidgets.QPushButton()
-        self.home_btn.setMinimumSize(QtCore.QSize(40, 40))
-        self.home_btn.setMaximumSize(QtCore.QSize(40, 40))
+        self.home_btn.setFixedSize(QtCore.QSize(40, 40))
         self.home_btn.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/icons/resources/house-64.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -65,12 +73,11 @@ class Ui_MainWindow(object):
         self.home_btn.setCheckable(True)
         self.home_btn.setAutoExclusive(True)
         self.home_btn.setObjectName("home_btn")
-        self.verticalLayout.addWidget(self.home_btn)
+        self.verticalLayout.addWidget(self.home_btn, 0, QtCore.Qt.AlignHCenter)
         
         # Developers button
         self.developers_btn = QtWidgets.QPushButton()
-        self.developers_btn.setMinimumSize(QtCore.QSize(40, 40))
-        self.developers_btn.setMaximumSize(QtCore.QSize(40, 40))
+        self.developers_btn.setFixedSize(QtCore.QSize(40, 40))
         self.developers_btn.setText("")
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap(":/icons/resources/group-64.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -79,12 +86,11 @@ class Ui_MainWindow(object):
         self.developers_btn.setCheckable(True)
         self.developers_btn.setAutoExclusive(True)
         self.developers_btn.setObjectName("developers_btn")
-        self.verticalLayout.addWidget(self.developers_btn)
+        self.verticalLayout.addWidget(self.developers_btn, 0, QtCore.Qt.AlignHCenter)
         
         # Contact button
         self.contact_btn = QtWidgets.QPushButton()
-        self.contact_btn.setMinimumSize(QtCore.QSize(40, 40))
-        self.contact_btn.setMaximumSize(QtCore.QSize(40, 40))
+        self.contact_btn.setFixedSize(QtCore.QSize(40, 40))
         self.contact_btn.setText("")
         icon2 = QtGui.QIcon()
         icon2.addPixmap(QtGui.QPixmap(":/icons/resources/contacts-64.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -93,12 +99,11 @@ class Ui_MainWindow(object):
         self.contact_btn.setCheckable(True)
         self.contact_btn.setAutoExclusive(True)
         self.contact_btn.setObjectName("contact_btn")
-        self.verticalLayout.addWidget(self.contact_btn)
+        self.verticalLayout.addWidget(self.contact_btn, 0, QtCore.Qt.AlignHCenter)
         
         # Support button
         self.support_btn = QtWidgets.QPushButton()
-        self.support_btn.setMinimumSize(QtCore.QSize(40, 40))
-        self.support_btn.setMaximumSize(QtCore.QSize(40, 40))
+        self.support_btn.setFixedSize(QtCore.QSize(40, 40))
         self.support_btn.setText("")
         icon3 = QtGui.QIcon()
         icon3.addPixmap(QtGui.QPixmap(":/icons/resources/support-64.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -107,12 +112,11 @@ class Ui_MainWindow(object):
         self.support_btn.setCheckable(True)
         self.support_btn.setAutoExclusive(True)
         self.support_btn.setObjectName("support_btn")
-        self.verticalLayout.addWidget(self.support_btn)
+        self.verticalLayout.addWidget(self.support_btn, 0, QtCore.Qt.AlignHCenter)
         
         # About us button
         self.abtus_btn = QtWidgets.QPushButton()
-        self.abtus_btn.setMinimumSize(QtCore.QSize(40, 40))
-        self.abtus_btn.setMaximumSize(QtCore.QSize(40, 40))
+        self.abtus_btn.setFixedSize(QtCore.QSize(40, 40))
         self.abtus_btn.setText("")
         icon4 = QtGui.QIcon()
         icon4.addPixmap(QtGui.QPixmap(":/icons/resources/clinic-64.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -121,7 +125,7 @@ class Ui_MainWindow(object):
         self.abtus_btn.setCheckable(True)
         self.abtus_btn.setAutoExclusive(True)
         self.abtus_btn.setObjectName("abtus_btn")
-        self.verticalLayout.addWidget(self.abtus_btn)
+        self.verticalLayout.addWidget(self.abtus_btn, 0, QtCore.Qt.AlignHCenter)
         
         # Spacer
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -129,8 +133,7 @@ class Ui_MainWindow(object):
         
         # Exit button
         self.exit_btn = QtWidgets.QPushButton()
-        self.exit_btn.setMinimumSize(QtCore.QSize(40, 40))
-        self.exit_btn.setMaximumSize(QtCore.QSize(40, 40))
+        self.exit_btn.setFixedSize(QtCore.QSize(40, 40))
         self.exit_btn.setText("")
         icon5 = QtGui.QIcon()
         icon5.addPixmap(QtGui.QPixmap(":/icons/resources/x-mark-64.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -139,7 +142,7 @@ class Ui_MainWindow(object):
         self.exit_btn.setCheckable(True)
         self.exit_btn.setAutoExclusive(True)
         self.exit_btn.setObjectName("exit_btn")
-        self.verticalLayout.addWidget(self.exit_btn)
+        self.verticalLayout.addWidget(self.exit_btn, 0, QtCore.Qt.AlignHCenter)
         
         self.icons_only_layout.addLayout(self.verticalLayout)
         
@@ -151,6 +154,8 @@ class Ui_MainWindow(object):
         
         # Header with logo and title
         self.header_layout = QtWidgets.QHBoxLayout()
+        self.header_layout.setContentsMargins(0, 0, 0, 0)
+        self.header_layout.setSpacing(10)
         
         self.label_2 = QtWidgets.QLabel()
         self.label_2.setMinimumSize(QtCore.QSize(40, 40))
@@ -174,14 +179,18 @@ class Ui_MainWindow(object):
         
         self.keys_only_layout.addLayout(self.header_layout)
         
+        # Add spacing to match header heights
+        self.keys_only_layout.addSpacing(10)
+        
         # Buttons for full sidebar
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_2.setSpacing(0)
+        self.verticalLayout_2.setSpacing(5)  # Match spacing with icon sidebar
         
-        # Home button
+        # Home button - with consistent height and layout
         self.home_btn2 = QtWidgets.QPushButton()
+        self.home_btn2.setFixedHeight(40)  # Consistent height with icon-only buttons
         self.home_btn2.setIcon(icon)
-        self.home_btn2.setIconSize(QtCore.QSize(14, 14))
+        self.home_btn2.setIconSize(QtCore.QSize(20, 20))  # Match icon size with icon-only buttons
         self.home_btn2.setCheckable(True)
         self.home_btn2.setAutoExclusive(True)
         self.home_btn2.setObjectName("home_btn2")
@@ -190,8 +199,9 @@ class Ui_MainWindow(object):
         
         # Developers button
         self.developers_btn2 = QtWidgets.QPushButton()
+        self.developers_btn2.setFixedHeight(40)
         self.developers_btn2.setIcon(icon1)
-        self.developers_btn2.setIconSize(QtCore.QSize(14, 14))
+        self.developers_btn2.setIconSize(QtCore.QSize(20, 20))
         self.developers_btn2.setCheckable(True)
         self.developers_btn2.setAutoExclusive(True)
         self.developers_btn2.setObjectName("developers_btn2")
@@ -200,8 +210,9 @@ class Ui_MainWindow(object):
         
         # Contact button
         self.contact_btn2 = QtWidgets.QPushButton()
+        self.contact_btn2.setFixedHeight(40)
         self.contact_btn2.setIcon(icon2)
-        self.contact_btn2.setIconSize(QtCore.QSize(14, 14))
+        self.contact_btn2.setIconSize(QtCore.QSize(20, 20))
         self.contact_btn2.setCheckable(True)
         self.contact_btn2.setAutoExclusive(True)
         self.contact_btn2.setObjectName("contact_btn2")
@@ -210,8 +221,9 @@ class Ui_MainWindow(object):
         
         # Support button
         self.support_btn2 = QtWidgets.QPushButton()
+        self.support_btn2.setFixedHeight(40)
         self.support_btn2.setIcon(icon3)
-        self.support_btn2.setIconSize(QtCore.QSize(14, 14))
+        self.support_btn2.setIconSize(QtCore.QSize(20, 20))
         self.support_btn2.setCheckable(True)
         self.support_btn2.setAutoExclusive(True)
         self.support_btn2.setObjectName("support_btn2")
@@ -220,22 +232,24 @@ class Ui_MainWindow(object):
         
         # About us button
         self.abtus_btn2 = QtWidgets.QPushButton()
+        self.abtus_btn2.setFixedHeight(40)
         self.abtus_btn2.setIcon(icon4)
-        self.abtus_btn2.setIconSize(QtCore.QSize(14, 14))
+        self.abtus_btn2.setIconSize(QtCore.QSize(20, 20))
         self.abtus_btn2.setCheckable(True)
         self.abtus_btn2.setAutoExclusive(True)
         self.abtus_btn2.setObjectName("abtus_btn2")
         self.abtus_btn2.setText("Abt us")
         self.verticalLayout_2.addWidget(self.abtus_btn2)
         
-        # Spacer
+        # Spacer - ensuring same amount of space as in icon-only sidebar
         spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem1)
         
         # Exit button
         self.exit_btn2 = QtWidgets.QPushButton()
+        self.exit_btn2.setFixedHeight(40)
         self.exit_btn2.setIcon(icon5)
-        self.exit_btn2.setIconSize(QtCore.QSize(14, 14))
+        self.exit_btn2.setIconSize(QtCore.QSize(20, 20))
         self.exit_btn2.setCheckable(True)
         self.exit_btn2.setAutoExclusive(True)
         self.exit_btn2.setObjectName("exit_btn2")
@@ -339,12 +353,14 @@ class Ui_MainWindow(object):
         self.contact_btn.toggled.connect(lambda checked: self.contact_btn2.setChecked(checked) if checked else None)
         self.support_btn.toggled.connect(lambda checked: self.support_btn2.setChecked(checked) if checked else None)
         self.abtus_btn.toggled.connect(lambda checked: self.abtus_btn2.setChecked(checked) if checked else None)
+        self.exit_btn.toggled.connect(lambda checked: self.exit_btn2.setChecked(checked) if checked else None)
         
         self.home_btn2.toggled.connect(lambda checked: self.home_btn.setChecked(checked) if checked else None)
         self.developers_btn2.toggled.connect(lambda checked: self.developers_btn.setChecked(checked) if checked else None)
         self.contact_btn2.toggled.connect(lambda checked: self.contact_btn.setChecked(checked) if checked else None)
         self.support_btn2.toggled.connect(lambda checked: self.support_btn.setChecked(checked) if checked else None)
         self.abtus_btn2.toggled.connect(lambda checked: self.abtus_btn.setChecked(checked) if checked else None)
+        self.exit_btn2.toggled.connect(lambda checked: self.exit_btn.setChecked(checked) if checked else None)
         
         # --- Connect page navigation ---
         # Home buttons -> Home Page (index 0)
@@ -374,10 +390,69 @@ class Ui_MainWindow(object):
         # Set initial button state
         self.home_btn.setChecked(True)
         
+        # Apply stylesheet to improve button appearance and alignment
+        self.style_sidebar_buttons()
+        
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
     
+    def style_sidebar_buttons(self):
+        """Apply consistent styling to sidebar buttons for better alignment"""
+        # Style for icon-only buttons
+        icon_button_style = """
+            QPushButton {
+                border: none;
+                border-radius: 5px;
+                padding: 5px;
+                background-color: transparent;
+            }
+            QPushButton:checked {
+                background-color: #e0e0e0;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """
+        
+        # Style for text buttons
+        text_button_style = """
+    QPushButton {
+        border: none;
+        border-radius: 8px;
+        padding: 5px 15px;
+        text-align: left;
+        background-color: transparent;
+        color: #fffefa;
+        font-weight: 600;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.3px;
+    }
+    QPushButton:checked {
+        background-color: #e6f2ff;
+        color: #1e88e5;
+        font-weight: 700;
+        border-left: 4px solid #1e88e5;
+    }
+    QPushButton:hover:!checked {
+        background-color: #f5f5f5;
+        color: #3498db;
+    }
+    QPushButton:pressed {
+        background-color: #d4e6f7;
+    }
+"""
+        
+        # Apply styles
+        for btn in [self.home_btn, self.developers_btn, self.contact_btn, 
+                   self.support_btn, self.abtus_btn, self.exit_btn]:
+            btn.setStyleSheet(icon_button_style)
+            
+        for btn in [self.home_btn2, self.developers_btn2, self.contact_btn2,
+                   self.support_btn2, self.abtus_btn2, self.exit_btn2]:
+            btn.setStyleSheet(text_button_style)
+    
     def toggle_sidebar(self, checked):
-        """Toggle between icon-only and full sidebar"""
+        """Toggle between icon-only and full sidebar with smooth transition"""
         if checked:
             # Show icon-only sidebar
             self.sidebar_stacked_layout.setCurrentIndex(0)

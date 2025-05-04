@@ -4,7 +4,7 @@ import os
 import sys
 
 class PatientDetailsFrame(QtWidgets.QFrame):
-    """Frame for displaying detailed patient information with stylish design."""
+    """Frame for displaying detailed patient information with a clean, modern design."""
     def __init__(self, patient_data=None, parent=None):
         super().__init__(parent)
         self.patient_data = patient_data
@@ -12,73 +12,90 @@ class PatientDetailsFrame(QtWidgets.QFrame):
         
     def setup_ui(self):
         # Set frame properties
-        self.setMinimumSize(700, 500)
+        self.setMinimumSize(800, 600)
         self.setStyleSheet("""
             QFrame {
-                background-color: rgba(255, 255, 255, 0.9); 
-                border-radius: 15px;
-                border: 2px solid #3498db;
+                background-color: rgba(255, 255, 255, 0.85); 
+                border-radius: 20px;
             }
             QLabel {
                 color: #2c3e50;
                 font-family: 'Segoe UI', Arial, sans-serif;
+                background: transparent;
             }
-            QLabel#titleLabel {
-                color: #2980b9;
-                font-size: 24px;
-                font-weight: bold;
-            }
-            QLabel#infoLabel {
-                font-size: 18px;
-                margin: 10px;
+            QTextEdit {
+                background-color: rgba(255, 255, 255, 0.5);
+                border-radius: 8px;
                 padding: 5px;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                color: #2c3e50;
             }
-            QLabel#symptomLabel {
-                font-size: 16px;
-                color: #e74c3c;
-                font-weight: bold;
+            QScrollArea {
+                border: none;
+                background: transparent;
             }
         """)
         
-        # *** BACKGROUND IMAGE LOCATION - START ***
-        # Set background image from resources folder
-        bg_image_path = r"resources\appbg.png"
-        if os.path.exists(bg_image_path):
-            palette = self.palette()
-            pixmap = QtGui.QPixmap(bg_image_path)
-            brush = QtGui.QBrush(pixmap)
-            palette.setBrush(QtGui.QPalette.Window, brush)
-            self.setPalette(palette)
-            self.setAutoFillBackground(True)
-        else:
-            # Fallback to gradient if image not found
-            palette = self.palette()
-            gradient = QtGui.QLinearGradient(0, 0, 0, self.height())
-            gradient.setColorAt(0.0, QtGui.QColor(224, 242, 255))
-            gradient.setColorAt(1.0, QtGui.QColor(172, 220, 255))
-            palette.setBrush(QtGui.QPalette.Window, QtGui.QBrush(gradient))
-            self.setPalette(palette)
-            self.setAutoFillBackground(True)
-        # *** BACKGROUND IMAGE LOCATION - END ***
+        # Create a background effect with semi-transparent overlay
+        self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
         
-        # Main layout
+        # Main layout with proper spacing
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(30, 30, 30, 30)
-        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(40, 40, 40, 40)
+        main_layout.setSpacing(25)
         
-        # Title
+        # Header section with patient icon and title
+        header_layout = QtWidgets.QHBoxLayout()
+        
+        # Patient icon placeholder
+        patient_icon = QtWidgets.QLabel()
+        icon_pixmap = QtGui.QPixmap("resources/patientinfo.png")  # Replace with your icon
+        if not icon_pixmap.isNull():
+            patient_icon.setPixmap(icon_pixmap.scaled(64, 64, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+        else:
+            # Fallback text if icon not found
+            patient_icon.setText("👤")
+            patient_icon.setStyleSheet("font-size: 48px;")
+        
+        patient_icon.setFixedSize(70, 70)
+        patient_icon.setAlignment(QtCore.Qt.AlignCenter)
+        header_layout.addWidget(patient_icon)
+        
+        # Title with gradient text effect
+        header_text_layout = QtWidgets.QVBoxLayout()
+        
         title_label = QtWidgets.QLabel("Patient Information")
-        title_label.setObjectName("titleLabel")
-        title_label.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(title_label)
+        title_label.setStyleSheet("""
+            font-size: 32px;
+            font-weight: bold;
+            color: #1e88e5;
+        """)
         
-        # Line separator
-        line = QtWidgets.QFrame()
-        line.setFrameShape(QtWidgets.QFrame.HLine)
-        line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        line.setStyleSheet("background-color: #3498db;")
-        line.setFixedHeight(2)
-        main_layout.addWidget(line)
+        # Subtitle showing patient name if available
+        subtitle_label = QtWidgets.QLabel()
+        if self.patient_data and len(self.patient_data) > 1:
+            subtitle_label.setText(self.patient_data[1])
+            subtitle_label.setStyleSheet("font-size: 18px; color: #546e7a; font-style: italic;")
+        
+        header_text_layout.addWidget(title_label)
+        header_text_layout.addWidget(subtitle_label)
+        header_layout.addLayout(header_text_layout)
+        header_layout.addStretch(1)  # Push everything to the left
+        
+        main_layout.addLayout(header_layout)
+        
+        # Elegant separator
+        separator = QtWidgets.QFrame()
+        separator.setFrameShape(QtWidgets.QFrame.HLine)
+        separator.setStyleSheet("""
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
+                                   stop:0 transparent, 
+                                   stop:0.3 #1e88e5, 
+                                   stop:0.7 #1e88e5, 
+                                   stop:1 transparent);
+            height: 1px;
+        """)
+        main_layout.addWidget(separator)
         
         # Create scrollable area for the information
         scroll_area = QtWidgets.QScrollArea()
@@ -88,16 +105,31 @@ class PatientDetailsFrame(QtWidgets.QFrame):
         
         scroll_content = QtWidgets.QWidget()
         scroll_layout = QtWidgets.QVBoxLayout(scroll_content)
+        scroll_layout.setContentsMargins(0, 10, 0, 10)
+        scroll_layout.setSpacing(30)
         
-        # Patient information grid
-        info_grid = QtWidgets.QGridLayout()
-        info_grid.setSpacing(15)
-        info_grid.setColumnStretch(0, 1)  # Field name column
-        info_grid.setColumnStretch(1, 3)  # Value column - give it more space
-        
-        # Information labels
+        # Information section
         if self.patient_data:
-            # Create label pairs (field name : value)
+            # Basic Information Card
+            basic_info_card = QtWidgets.QWidget()
+            basic_info_layout = QtWidgets.QVBoxLayout(basic_info_card)
+            
+            # Section title
+            basic_info_title = QtWidgets.QLabel("Basic Information")
+            basic_info_title.setStyleSheet("""
+                font-size: 20px;
+                font-weight: bold;
+                color: #1e88e5;
+                padding-bottom: 5px;
+            """)
+            basic_info_layout.addWidget(basic_info_title)
+            
+            # Information grid for basic details
+            info_grid = QtWidgets.QGridLayout()
+            info_grid.setHorizontalSpacing(30)
+            info_grid.setVerticalSpacing(15)
+            
+            # Basic information fields
             fields = [
                 ("Patient ID:", str(self.patient_data[0])),
                 ("Full Name:", self.patient_data[1]),
@@ -109,120 +141,208 @@ class PatientDetailsFrame(QtWidgets.QFrame):
             for row, (field_name, value) in enumerate(fields):
                 # Field name
                 field_label = QtWidgets.QLabel(field_name)
-                field_label.setObjectName("infoLabel")
-                field_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-                field_label.setStyleSheet("font-weight: bold;")
+                field_label.setStyleSheet("""
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #455a64;
+                """)
                 
-                # Field value
+                # Field value with nicer styling
                 value_label = QtWidgets.QLabel(value)
-                value_label.setObjectName("infoLabel")
-                value_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+                value_label.setStyleSheet("""
+                    font-size: 16px;
+                    color: #37474f;
+                    background-color: rgba(240, 247, 255, 0.5);
+                    border-radius: 5px;
+                    padding: 5px 10px;
+                """)
                 value_label.setWordWrap(True)
                 
                 # Add to grid
                 info_grid.addWidget(field_label, row, 0)
                 info_grid.addWidget(value_label, row, 1)
             
-            # Notes section (special handling for possibly longer text)
-            notes_title = QtWidgets.QLabel("Notes:")
-            notes_title.setObjectName("symptomLabel")
-            notes_title.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
+            basic_info_layout.addLayout(info_grid)
+            scroll_layout.addWidget(basic_info_card)
             
-            notes_value = QtWidgets.QTextEdit()
-            notes_value.setReadOnly(True)
-            notes_value.setText(self.patient_data[5] if len(self.patient_data) > 5 else "No notes available")
-            notes_value.setStyleSheet("""
-                QTextEdit {
-                    background-color: transparent;
-                    border: none;
-                    font-size: 16px;
-                    color: #2c3e50;
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                }
+            # Medical Information Card
+            medical_card = QtWidgets.QWidget()
+            medical_layout = QtWidgets.QVBoxLayout(medical_card)
+            
+            # Section title
+            medical_title = QtWidgets.QLabel("Medical Information")
+            medical_title.setStyleSheet("""
+                font-size: 20px;
+                font-weight: bold;
+                color: #1e88e5;
+                padding-bottom: 5px;
             """)
-            notes_value.setMinimumHeight(100)
+            medical_layout.addWidget(medical_title)
             
-            info_grid.addWidget(notes_title, len(fields), 0)
-            info_grid.addWidget(notes_value, len(fields), 1)
+            # Disease information with card-like appearance
+            disease_layout = QtWidgets.QVBoxLayout()
             
-            # Display disease and symptoms information
-            disease_title = QtWidgets.QLabel("Disease:")
-            disease_title.setObjectName("symptomLabel")
-            disease_title.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
+            disease_label = QtWidgets.QLabel("Disease:")
+            disease_label.setStyleSheet("""
+                font-size: 16px;
+                font-weight: bold;
+                color: #455a64;
+            """)
             
             disease_value = QtWidgets.QTextEdit()
             disease_value.setReadOnly(True)
             disease_value.setText(self.patient_data[6] if len(self.patient_data) > 6 else "No disease information available")
             disease_value.setStyleSheet("""
-                QTextEdit {
-                    background-color: transparent;
-                    border: none;
-                    font-size: 16px;
-                    color: #2c3e50;
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                }
+                border-radius: 8px;
+                padding: 10px;
+                font-size: 15px;
+                background-color: rgba(240, 247, 255, 0.7);
+                min-height: 60px;
+                max-height: 120px;
             """)
-            disease_value.setMinimumHeight(80)
             
-            info_grid.addWidget(disease_title, len(fields) + 1, 0)
-            info_grid.addWidget(disease_value, len(fields) + 1, 1)
+            disease_layout.addWidget(disease_label)
+            disease_layout.addWidget(disease_value)
+            medical_layout.addLayout(disease_layout)
             
-            # Symptoms section
-            symptoms_title = QtWidgets.QLabel("Symptoms:")
-            symptoms_title.setObjectName("symptomLabel")
-            symptoms_title.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
+            # Spacer
+            medical_layout.addSpacing(15)
+            
+            # Symptoms information
+            symptoms_layout = QtWidgets.QVBoxLayout()
+            
+            symptoms_label = QtWidgets.QLabel("Symptoms:")
+            symptoms_label.setStyleSheet("""
+                font-size: 16px;
+                font-weight: bold;
+                color: #455a64;
+            """)
             
             symptoms_value = QtWidgets.QTextEdit()
             symptoms_value.setReadOnly(True)
             symptoms_value.setText(self.patient_data[7] if len(self.patient_data) > 7 else "No symptoms recorded")
             symptoms_value.setStyleSheet("""
-                QTextEdit {
-                    background-color: transparent;
-                    border: none;
-                    font-size: 16px;
-                    color: #2c3e50;
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                }
+                border-radius: 8px;
+                padding: 10px;
+                font-size: 15px;
+                background-color: rgba(240, 247, 255, 0.7);
+                min-height: 80px;
+                max-height: 150px;
             """)
-            symptoms_value.setMinimumHeight(100)
             
-            info_grid.addWidget(symptoms_title, len(fields) + 2, 0)
-            info_grid.addWidget(symptoms_value, len(fields) + 2, 1)
-        
-        info_frame = QtWidgets.QFrame()
-        info_frame.setLayout(info_grid)
-        info_frame.setStyleSheet("""
-            QFrame {
-                background-color: rgba(255, 255, 255, 0.7);
-                border-radius: 10px;
+            symptoms_layout.addWidget(symptoms_label)
+            symptoms_layout.addWidget(symptoms_value)
+            medical_layout.addLayout(symptoms_layout)
+            
+            scroll_layout.addWidget(medical_card)
+            
+            # Notes Section
+            notes_card = QtWidgets.QWidget()
+            notes_layout = QtWidgets.QVBoxLayout(notes_card)
+            
+            notes_title = QtWidgets.QLabel("Doctor's Notes")
+            notes_title.setStyleSheet("""
+                font-size: 20px;
+                font-weight: bold;
+                color: #1e88e5;
+                padding-bottom: 5px;
+            """)
+            notes_layout.addWidget(notes_title)
+            
+            notes_value = QtWidgets.QTextEdit()
+            notes_value.setReadOnly(True)
+            notes_value.setText(self.patient_data[5] if len(self.patient_data) > 5 else "No notes available")
+            notes_value.setStyleSheet("""
+                border-radius: 8px;
                 padding: 15px;
-            }
-        """)
+                font-size: 15px;
+                background-color: rgba(240, 247, 255, 0.7);
+                min-height: 100px;
+            """)
+            
+            notes_layout.addWidget(notes_value)
+            scroll_layout.addWidget(notes_card)
         
-        scroll_layout.addWidget(info_frame)
         scroll_area.setWidget(scroll_content)
-        
         main_layout.addWidget(scroll_area)
         
-        # Back button
+        # Back button with improved design
         self.back_button = QtWidgets.QPushButton("Back to Patient List")
         self.back_button.setStyleSheet("""
             QPushButton {
-                background-color: #3498db;
+                background-color: #1e88e5;
                 color: white;
                 font-size: 16px;
-                border-radius: 8px;
-                padding: 10px 20px;
+                font-weight: bold;
+                border-radius: 25px;
+                padding: 12px 25px;
+                border: none;
             }
             QPushButton:hover {
-                background-color: #2980b9;
+                background-color: #1976d2;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+            QPushButton:pressed {
+                background-color: #1565c0;
             }
         """)
-        self.back_button.setFixedHeight(40)
+        self.back_button.setFixedHeight(50)
+        self.back_button.setCursor(QtCore.Qt.PointingHandCursor)
+        
+        # Add shadow effect to button (optional)
+        shadow = QtWidgets.QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(10)
+        shadow.setColor(QtGui.QColor(0, 0, 0, 50))
+        shadow.setOffset(0, 2)
+        self.back_button.setGraphicsEffect(shadow)
         
         main_layout.addWidget(self.back_button, alignment=QtCore.Qt.AlignCenter)
-
-
+    def set_background_image(self, image_path="resources/appbg4.jpg"):
+   
+     if os.path.exists(image_path):
+        # Create a background label that will hold our image
+        self.bg_label = QtWidgets.QLabel(self)
+        self.bg_label.setGeometry(0, 0, self.width(), self.height())
+        
+        # Load and set the image
+        pixmap = QtGui.QPixmap(image_path)
+        self.bg_label.setPixmap(pixmap.scaled(
+            self.width(), self.height(),
+            QtCore.Qt.KeepAspectRatioByExpanding,
+            QtCore.Qt.SmoothTransformation
+        ))
+        
+        # Make sure the background stays behind other widgets
+        self.bg_label.lower()
+        
+        # Add a semi-transparent overlay
+        self.overlay = QtWidgets.QLabel(self)
+        self.overlay.setGeometry(0, 0, self.width(), self.height())
+        self.overlay.setStyleSheet("background-color: rgba(255, 255, 255, 0.85);")
+        self.overlay.lower()
+        
+        # Update background when window is resized
+        original_resize_event = self.resizeEvent
+        
+        def new_resize_event(event):
+            # Update background size
+            self.bg_label.setGeometry(0, 0, self.width(), self.height())
+            self.bg_label.setPixmap(pixmap.scaled(
+                self.width(), self.height(),
+                QtCore.Qt.KeepAspectRatioByExpanding,
+                QtCore.Qt.SmoothTransformation
+            ))
+            
+            # Update overlay size
+            self.overlay.setGeometry(0, 0, self.width(), self.height())
+            
+            # Call original resize handler
+            if original_resize_event:
+                original_resize_event(event)
+        
+        self.resizeEvent = new_resize_event
+     else:
+        print(f"Background image not found: {image_path}")
 class PatientNotFoundFrame(QtWidgets.QFrame):
     """Frame displayed when no patient is found with the searched name."""
     def __init__(self, searched_name="", parent=None):
@@ -232,95 +352,183 @@ class PatientNotFoundFrame(QtWidgets.QFrame):
         
     def setup_ui(self):
         # Set frame properties
-        self.setMinimumSize(500, 300)
+        self.setMinimumSize(600, 400)
         self.setStyleSheet("""
             QFrame {
                 background-color: rgba(255, 255, 255, 0.9);
-                border-radius: 15px;
-                border: 2px solid #e74c3c;
+                border-radius: 20px;
             }
-            QLabel#titleLabel {
-                color: #e74c3c;
-                font-size: 22px;
-                font-weight: bold;
-                font-family: 'Segoe UI', Arial, sans-serif;
-            }
-            QLabel#messageLabel {
-                color: #2c3e50;
-                font-size: 16px;
+            QLabel {
+                background: transparent;
                 font-family: 'Segoe UI', Arial, sans-serif;
             }
         """)
         
-        # Background setup (using a gradient since we can't load external images)
-        palette = self.palette()
-        gradient = QtGui.QLinearGradient(0, 0, 0, self.height())
-        gradient.setColorAt(0.0, QtGui.QColor(255, 240, 240))
-        gradient.setColorAt(1.0, QtGui.QColor(255, 220, 220))
-        palette.setBrush(QtGui.QPalette.Window, QtGui.QBrush(gradient))
-        self.setPalette(palette)
-        self.setAutoFillBackground(True)
-        
         # Main layout
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(30, 30, 30, 30)
+        main_layout.setContentsMargins(40, 40, 40, 40)
         main_layout.setSpacing(20)
         
-        # Not found icon (using text as placeholder since we can't load external images)
-        icon_label = QtWidgets.QLabel("🔍❌")
+        # Create an alignment container to center content
+        center_container = QtWidgets.QWidget()
+        center_layout = QtWidgets.QVBoxLayout(center_container)
+        center_layout.setAlignment(QtCore.Qt.AlignCenter)
+        center_layout.setSpacing(30)
+        
+        # Not found icon placeholder
+        icon_label = QtWidgets.QLabel()
+        icon_pixmap = QtGui.QPixmap("resources/notfound.png")  # Replace with your icon
+        if not icon_pixmap.isNull():
+            icon_label.setPixmap(icon_pixmap.scaled(120, 120, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+        else:
+            # Fallback to emoji if image not found
+            icon_label.setText("🔍")
+            icon_label.setStyleSheet("font-size: 72px; color: #546e7a;")
+        
         icon_label.setAlignment(QtCore.Qt.AlignCenter)
-        icon_label.setStyleSheet("font-size: 48px;")
-        main_layout.addWidget(icon_label)
+        center_layout.addWidget(icon_label)
         
-        # Title
+        # Animated title effect with gradient
         title_label = QtWidgets.QLabel("Patient Not Found")
-        title_label.setObjectName("titleLabel")
+        title_label.setStyleSheet("""
+            font-size: 32px;
+            font-weight: bold;
+            color: #e53935;
+            padding-bottom: 10px;
+        """)
         title_label.setAlignment(QtCore.Qt.AlignCenter)
-        main_layout.addWidget(title_label)
+        center_layout.addWidget(title_label)
         
-        # Message with better formatting
+        # Message with nicer formatting
         message_container = QtWidgets.QWidget()
         message_layout = QtWidgets.QVBoxLayout(message_container)
-        message_layout.setContentsMargins(20, 10, 20, 10)
+        message_layout.setContentsMargins(0, 0, 0, 0)
+        message_layout.setSpacing(15)
         
-        message_label = QtWidgets.QLabel(f"No patient found with the name:")
-        message_label.setObjectName("messageLabel")
+        message_label = QtWidgets.QLabel("We couldn't find any patient with the name:")
+        message_label.setStyleSheet("""
+            font-size: 18px;
+            color: #546e7a;
+        """)
         message_label.setAlignment(QtCore.Qt.AlignCenter)
         
-        # Display the search term more prominently
-        search_term = QtWidgets.QLabel(f"'{self.searched_name}'")
+        # Search term display
+        search_container = QtWidgets.QWidget()
+        search_container.setStyleSheet("""
+            background-color: rgba(240, 240, 240, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 50px;
+        """)
+        search_layout = QtWidgets.QVBoxLayout(search_container)
+        
+        search_term = QtWidgets.QLabel(f'"{self.searched_name}"')
         search_term.setStyleSheet("""
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
-            color: #e74c3c;
-            margin: 10px;
+            color: #e53935;
         """)
         search_term.setAlignment(QtCore.Qt.AlignCenter)
         search_term.setWordWrap(True)
         
+        search_layout.addWidget(search_term)
+        
         message_layout.addWidget(message_label)
-        message_layout.addWidget(search_term)
+        message_layout.addWidget(search_container)
         
-        main_layout.addWidget(message_container)
+        # Suggestion text
+        suggestion_label = QtWidgets.QLabel("Please check the spelling or try another search term.")
+        suggestion_label.setStyleSheet("""
+            font-size: 16px;
+            color: #78909c;
+            padding-top: 10px;
+        """)
+        suggestion_label.setAlignment(QtCore.Qt.AlignCenter)
+        message_layout.addWidget(suggestion_label)
         
-        # Back button
+        center_layout.addWidget(message_container)
+        
+        # Back button with improved design
         self.back_button = QtWidgets.QPushButton("Back to Patient List")
         self.back_button.setStyleSheet("""
             QPushButton {
-                background-color: #e74c3c;
+                background-color: #e53935;
                 color: white;
                 font-size: 16px;
-                border-radius: 8px;
-                padding: 10px 20px;
+                font-weight: bold;
+                border-radius: 25px;
+                padding: 12px 25px;
+                border: none;
             }
             QPushButton:hover {
-                background-color: #c0392b;
+                background-color: #d32f2f;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+            QPushButton:pressed {
+                background-color: #c62828;
             }
         """)
-        self.back_button.setFixedHeight(40)
+        self.back_button.setFixedHeight(50)
+        self.back_button.setMinimumWidth(200)
+        self.back_button.setCursor(QtCore.Qt.PointingHandCursor)
         
-        main_layout.addWidget(self.back_button, alignment=QtCore.Qt.AlignCenter)
-
+        # Add shadow effect to button (optional)
+        shadow = QtWidgets.QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(10)
+        shadow.setColor(QtGui.QColor(0, 0, 0, 50))
+        shadow.setOffset(0, 2)
+        self.back_button.setGraphicsEffect(shadow)
+        
+        center_layout.addWidget(self.back_button, alignment=QtCore.Qt.AlignCenter)
+        
+        main_layout.addWidget(center_container)
+        
+    def set_background_image(self, image_path="resources/appbg4.jpg"):
+   
+     if os.path.exists(image_path):
+        # Create a background label that will hold our image
+        self.bg_label = QtWidgets.QLabel(self)
+        self.bg_label.setGeometry(0, 0, self.width(), self.height())
+        
+        # Load and set the image
+        pixmap = QtGui.QPixmap(image_path)
+        self.bg_label.setPixmap(pixmap.scaled(
+            self.width(), self.height(),
+            QtCore.Qt.KeepAspectRatioByExpanding,
+            QtCore.Qt.SmoothTransformation
+        ))
+        
+        # Make sure the background stays behind other widgets
+        self.bg_label.lower()
+        
+        # Add a semi-transparent overlay
+        self.overlay = QtWidgets.QLabel(self)
+        self.overlay.setGeometry(0, 0, self.width(), self.height())
+        self.overlay.setStyleSheet("background-color: rgba(255, 255, 255, 0.85);")
+        self.overlay.lower()
+        
+        # Update background when window is resized
+        original_resize_event = self.resizeEvent
+        
+        def new_resize_event(event):
+            # Update background size
+            self.bg_label.setGeometry(0, 0, self.width(), self.height())
+            self.bg_label.setPixmap(pixmap.scaled(
+                self.width(), self.height(),
+                QtCore.Qt.KeepAspectRatioByExpanding,
+                QtCore.Qt.SmoothTransformation
+            ))
+            
+            # Update overlay size
+            self.overlay.setGeometry(0, 0, self.width(), self.height())
+            
+            # Call original resize handler
+            if original_resize_event:
+                original_resize_event(event)
+        
+        self.resizeEvent = new_resize_event
+     else:
+        print(f"Background image not found: {image_path}")
 
 class SearchDialog(QtWidgets.QDialog):
     """Dialog for searching patients by name."""
@@ -597,14 +805,66 @@ class PatientWidget(QtWidgets.QWidget):
         # Add main content to stack
         self.content_stack.addWidget(self.main_content)
         self.main_layout.addWidget(self.content_stack)
+        bottom_button_layout = QtWidgets.QHBoxLayout()
     
+    # Back button to return to workspaces
+        self.back_button = QtWidgets.QPushButton("Go Back to Workspaces")
+        self.back_button.setFixedHeight(40)
+        self.back_button.setStyleSheet("""
+    QPushButton {
+        background: qlineargradient(
+            spread:pad, x1:0, y1:0, x2:1, y2:0,
+            stop:0 #ff3019, 
+            stop:1 #cf0404
+        );
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 5px;
+        padding: 5px 15px;
+        border: 1px solid #8a0000;
+    }
+    QPushButton:hover {
+        background: qlineargradient(
+            spread:pad, x1:0, y1:0, x2:1, y2:0,
+            stop:0 #cf0404, 
+            stop:1 #8a0000
+        );
+    }
+    QPushButton:pressed {
+        background: qlineargradient(
+            spread:pad, x1:0, y1:0, x2:1, y2:0,
+            stop:0 #8a0000, 
+            stop:1 #5a0000
+        );
+    }
+""")
+        self.back_button.setCursor(QtCore.Qt.PointingHandCursor)
+        bottom_button_layout.addWidget(self.back_button)
+    
+    # Add stretch to push button to the right
+        bottom_button_layout.addStretch()
+    
+        main_content_layout.addLayout(bottom_button_layout)
     def connect_signals(self):
         """Connect UI element signals to slots."""
         self.search_button.clicked.connect(self.show_search_dialog)
         self.add_button.clicked.connect(self.show_add_patient)
         self.adjustify_button.clicked.connect(self.adjustify_patient)
         self.patient_table.doubleClicked.connect(self.show_patient_details)
+        self.back_button.clicked.connect(self.go_back_to_workspaces)
     
+    def go_back_to_workspaces(self):
+        """Return to the workspaces/home page."""
+        from pages.home import MainWindow
+        if self.main_window:
+            # Find the HomePage widget in the stacked widget
+            for index in range(self.main_window.count()):
+                widget = self.main_window.widget(index)
+                if isinstance(widget, MainWindow):  # This checks for MainWindow class
+                    self.main_window.setCurrentWidget(widget)
+                    break
+
     def show_patient_details(self, index):
         """Show detailed information for the selected patient."""
         row = index.row()
@@ -618,9 +878,12 @@ class PatientWidget(QtWidgets.QWidget):
         try:
             # Connect to database
             connection = oracledb.connect(
+                # user="system", 
+                # password="Abdo2004@", 
+                # dsn="localhost:1521/FREE"
                 user="system", 
-                password="Abdo2004@", 
-                dsn="localhost:1521/FREE"
+                password="s2004b22", 
+                dsn="192.168.21.1:1521/FREE"
             )
             cursor = connection.cursor()
 
@@ -699,9 +962,12 @@ class PatientWidget(QtWidgets.QWidget):
         try:
             # Connect to database
             connection = oracledb.connect(
+                # user="system", 
+                # password="Abdo2004@", 
+                # dsn="localhost:1521/FREE"
                 user="system", 
-                password="Abdo2004@", 
-                dsn="localhost:1521/FREE"
+                password="s2004b22", 
+                dsn="192.168.21.1:1521/FREE"
             )
             cursor = connection.cursor()
 
@@ -741,6 +1007,7 @@ class PatientWidget(QtWidgets.QWidget):
             if result:
                 # Patient found - show details
                 self.current_frame = PatientDetailsFrame(result, self)
+                self.current_frame.set_background_image("resources/app3bg.jpg")
                 self.current_frame.back_button.clicked.connect(self.return_to_main_view)
                 self.content_stack.addWidget(self.current_frame)
                 self.content_stack.setCurrentWidget(self.current_frame)
@@ -821,9 +1088,12 @@ class PatientWidget(QtWidgets.QWidget):
      try:
         # Establish database connection
         connection = oracledb.connect(
-            user="system",
-            password="Abdo2004@",
-            dsn="localhost:1521/FREE"
+            # user="system",
+            # password="Abdo2004@",
+            # dsn="localhost:1521/FREE"
+                user="system", 
+                password="s2004b22", 
+                dsn="192.168.21.1:1521/FREE"
         )
         cursor = connection.cursor()
 
@@ -933,9 +1203,12 @@ class PatientWidget(QtWidgets.QWidget):
         try:
             # Connect to database
             connection = oracledb.connect(
+                # user="system", 
+                # password="Abdo2004@", 
+                # dsn="localhost:1521/FREE"
                 user="system", 
-                password="Abdo2004@", 
-                dsn="localhost:1521/FREE"
+                password="s2004b22", 
+                dsn="192.168.21.1:1521/FREE"
             )
             cursor = connection.cursor()
 

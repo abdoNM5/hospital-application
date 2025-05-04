@@ -44,9 +44,12 @@ if (empty($data['name']) || empty($data['disease_name']) || empty($data['birth_d
 // Connect to Oracle database using OCI8
 try {
     // Oracle connection details
+    // $username = 'system';
+    // $password = 'Abdo2004@';
+    // $connection_string = 'localhost:1521/FREE';
     $username = 'system';
-    $password = 'Abdo2004@';
-    $connection_string = 'localhost:1521/FREE';
+    $password = 's2004b22';
+    $connection_string = '192.168.21.1:1521/FREE';
     
     // Create connection
     $conn = oci_connect($username, $password, $connection_string);
